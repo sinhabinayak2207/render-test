@@ -1,0 +1,800 @@
+/* CSDirekt Tender Intelligence Report — design system.
+   Matches Claude target visual reference: dark-navy section bands,
+   coloured verdict pills, bordered tables, brand footer. */
+
+@page {
+  size: A4 landscape;
+  margin: 14mm 16mm 16mm 16mm;
+  @top-left {
+    content: "CSDirekt Tender Intelligence Report  ·  " string(report-date);
+    font-family: "Helvetica", "Arial", sans-serif;
+    font-size: 8.5pt;
+    color: #6B7280;
+  }
+  @top-right {
+    content: "";
+  }
+  @bottom-left {
+    content: "CSDirekt · Crafting Immersive Experiences";
+    font-family: "Helvetica", sans-serif;
+    font-size: 8pt;
+    color: #6B7280;
+  }
+  @bottom-right {
+    content: "CONFIDENTIAL · Internal Use Only · Page " counter(page) " / " counter(pages);
+    font-family: "Helvetica", sans-serif;
+    font-size: 8pt;
+    color: #6B7280;
+  }
+}
+
+@page :first {
+  @top-left { content: ""; }
+  @top-right { content: ""; }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: "Helvetica", "Arial", sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.5;
+  color: #1F2937;
+  margin: 0;
+}
+
+.report-date-string { string-set: report-date content(); display: none; }
+
+/* ─── Cover ─────────────────────────────────────────────── */
+.cover {
+  text-align: center;
+  padding-top: 30mm;
+}
+.cover .logo {
+  width: 48mm;
+  margin: 0 auto 12mm;
+}
+.cover h1 {
+  font-size: 32pt;
+  font-weight: 800;
+  letter-spacing: -0.5pt;
+  color: #1F2937;
+  margin: 0 0 4pt 0;
+  line-height: 1.1;
+}
+.cover .subtitle {
+  font-size: 14pt;
+  color: #DC2626;
+  font-weight: 700;
+  letter-spacing: 0.5pt;
+  margin-bottom: 18mm;
+}
+.cover .meta {
+  font-size: 10.5pt;
+  color: #374151;
+  margin-bottom: 2pt;
+}
+.cover .meta strong { font-weight: 600; color: #1F2937; }
+
+/* ─── Stats card row ────────────────────────────────────── */
+.stats-grid {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 6pt 0;
+  margin-top: 14mm;
+}
+.stat-card {
+  display: table-cell;
+  text-align: center;
+  padding: 14pt 6pt;
+  border-radius: 4pt;
+  vertical-align: middle;
+}
+.stat-card .value {
+  font-size: 26pt;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4pt;
+}
+.stat-card .label {
+  font-size: 8.5pt;
+  font-weight: 500;
+  letter-spacing: 0.3pt;
+  text-transform: uppercase;
+}
+.stat-card.dark { background: #1F2937; color: #FFFFFF; }
+.stat-card.grey { background: #4B5563; color: #FFFFFF; }
+.stat-card.green { background: #DCFCE7; color: #166534; }
+.stat-card.amber { background: #FEF3C7; color: #92400E; }
+
+.confidential-stamp {
+  text-align: center;
+  margin-top: 18mm;
+  font-size: 8pt;
+  color: #9CA3AF;
+  letter-spacing: 1pt;
+}
+
+/* ─── Section band ──────────────────────────────────────── */
+.section-band {
+  background: #1F2937;
+  color: #FFFFFF;
+  padding: 8pt 14pt;
+  font-weight: 700;
+  font-size: 12pt;
+  letter-spacing: 0.3pt;
+  margin: 14pt 0 8pt 0;
+}
+
+/* ─── Callout ───────────────────────────────────────────── */
+.callout {
+  background: #EFF6FF;
+  border-left: 3pt solid #3B82F6;
+  padding: 10pt 14pt;
+  font-size: 10pt;
+  line-height: 1.55;
+  color: #1E3A8A;
+  margin: 6pt 0 12pt 0;
+}
+.callout.urgent {
+  background: #FEE2E2;
+  border-left-color: #DC2626;
+  color: #991B1B;
+}
+
+/* ─── Pipeline summary table ────────────────────────────── */
+table.pipeline {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6pt 0 12pt 0;
+  font-size: 9.5pt;
+}
+table.pipeline th {
+  background: #1F2937;
+  color: #FFFFFF;
+  font-weight: 600;
+  padding: 8pt 6pt;
+  text-align: left;
+  font-size: 9pt;
+  border: 0.5pt solid #1F2937;
+}
+table.pipeline td {
+  padding: 6pt 6pt;
+  vertical-align: top;
+  border: 0.5pt solid #D1D5DB;
+}
+table.pipeline tr.eligible td { background: #DCFCE7; }
+table.pipeline tr.partial td { background: #FEF3C7; }
+table.pipeline .verdict-pill {
+  display: inline-block;
+  padding: 2pt 8pt;
+  border-radius: 3pt;
+  font-size: 8.5pt;
+  font-weight: 700;
+  letter-spacing: 0.3pt;
+}
+table.pipeline .verdict-pill.eligible { background: #166534; color: #FFFFFF; }
+table.pipeline .verdict-pill.partial { background: #92400E; color: #FFFFFF; }
+table.pipeline a { color: #1D4ED8; text-decoration: none; }
+table.pipeline a:hover { text-decoration: underline; }
+
+/* ─── Per-tender block ──────────────────────────────────── */
+.tender-block {
+  page-break-before: always;
+}
+.tender-header {
+  border-radius: 3pt;
+  padding: 10pt 14pt;
+  margin-top: 10pt;
+}
+.tender-header.eligible { background: #DCFCE7; color: #166534; }
+.tender-header.partial { background: #FEF3C7; color: #92400E; }
+.tender-header .tag {
+  font-size: 9.5pt;
+  font-weight: 700;
+  letter-spacing: 0.5pt;
+  text-transform: uppercase;
+  display: inline-block;
+  padding-right: 8pt;
+  border-right: 1pt solid currentColor;
+  margin-right: 8pt;
+}
+.tender-header h2 {
+  font-size: 15pt;
+  font-weight: 700;
+  margin: 6pt 0 4pt 0;
+  color: #111827;
+  line-height: 1.25;
+}
+.tender-header .summary {
+  font-size: 10pt;
+  color: #374151;
+}
+
+/* ─── 2-col info table (Basic Tender Information) ──────── */
+table.info {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6pt 0 10pt 0;
+  font-size: 10pt;
+  border: 0.5pt solid #D1D5DB;
+}
+table.info td {
+  padding: 6pt 8pt;
+  vertical-align: top;
+  border: 0.5pt solid #E5E7EB;
+}
+table.info td.label {
+  font-weight: 600;
+  color: #374151;
+  width: 26%;
+  background: #F9FAFB;
+}
+table.info td.value {
+  color: #1F2937;
+  width: 24%;
+}
+table.info .muted { color: #9CA3AF; font-style: italic; font-size: 9.5pt; }
+
+/* ─── Bid decision cards row ────────────────────────────── */
+.bid-cards {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 6pt 0;
+  margin: 8pt 0 10pt 0;
+}
+.bid-card {
+  display: table-cell;
+  padding: 10pt;
+  text-align: center;
+  border: 0.5pt solid #D1D5DB;
+  border-radius: 3pt;
+  vertical-align: middle;
+  width: 33%;
+}
+.bid-card .label {
+  font-size: 8.5pt;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+}
+.bid-card .value {
+  font-size: 16pt;
+  font-weight: 700;
+  margin-top: 4pt;
+}
+.bid-card.eligible { background: #DCFCE7; border-color: #BBF7D0; }
+.bid-card.eligible .value { color: #166534; }
+.bid-card.partial { background: #FEF3C7; border-color: #FDE68A; }
+.bid-card.partial .value { color: #92400E; }
+
+/* ─── Eligibility 4-row table ───────────────────────────── */
+table.eligibility {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6pt 0 10pt 0;
+  font-size: 10pt;
+}
+table.eligibility th {
+  background: #1F2937;
+  color: #FFFFFF;
+  padding: 6pt 8pt;
+  font-weight: 600;
+  text-align: left;
+  font-size: 9pt;
+}
+table.eligibility td {
+  padding: 6pt 8pt;
+  border: 0.5pt solid #E5E7EB;
+}
+table.eligibility .status-badge {
+  display: inline-block;
+  padding: 2pt 8pt;
+  border-radius: 3pt;
+  font-size: 8.5pt;
+  font-weight: 700;
+}
+table.eligibility .status-badge.ok { background: #DCFCE7; color: #166534; }
+table.eligibility .status-badge.warn { background: #FEE2E2; color: #991B1B; }
+
+/* ─── Section heading inside tender block ──────────────── */
+h3.section-title {
+  font-size: 11pt;
+  font-weight: 700;
+  color: #1F2937;
+  margin: 10pt 0 4pt 0;
+  border-bottom: 0.5pt solid #D1D5DB;
+  padding-bottom: 2pt;
+}
+
+ul.tight { margin: 4pt 0 8pt 16pt; padding: 0; }
+ul.tight li { margin-bottom: 2pt; font-size: 10pt; }
+
+.kv-row {
+  display: table;
+  width: 100%;
+  margin: 3pt 0;
+}
+.kv-row .k {
+  display: table-cell;
+  width: 28%;
+  font-weight: 600;
+  color: #374151;
+  padding-right: 8pt;
+}
+.kv-row .v { display: table-cell; color: #1F2937; }
+.kv-row .v.muted { color: #9CA3AF; font-style: italic; font-size: 9.5pt; }
+
+/* ═══ Report 1 — Tender Search Executive Summary ═══ */
+.r1 { padding: 4mm 6mm; }
+.r1-header { text-align: center; margin-bottom: 6mm; }
+.r1-title {
+  font-size: 26pt; font-weight: 800; margin: 0; color: #1F2937;
+}
+.r1-subtitle {
+  font-size: 16pt; font-weight: 700; margin: 4pt 0 0 0; color: #374151;
+}
+.r1-meta-line {
+  text-align: center;
+  font-size: 9.5pt;
+  color: #4B5563;
+  margin: 4pt 0 0 0;
+}
+.r1-meta-line strong { color: #1F2937; font-weight: 700; }
+
+.r1-metrics {
+  display: flex;
+  flex-direction: row;
+  gap: 4mm;
+  margin: 0 0 7mm 0;
+  width: 100%;
+}
+.metric-card {
+  flex: 1 1 0;
+  border: 1pt solid #D1D5DB;
+  border-radius: 4pt;
+  padding: 4mm 3mm;
+  text-align: center;
+  background: #FFFFFF;
+}
+.metric-card .metric-num {
+  font-size: 22pt;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #111827;
+}
+.metric-card .metric-label {
+  font-size: 9pt;
+  font-weight: 600;
+  letter-spacing: 0.3pt;
+  text-transform: uppercase;
+  color: #4B5563;
+  margin-top: 2pt;
+}
+.metric-total    { border-top: 3pt solid #1F2937; }
+.metric-eligible { border-top: 3pt solid #16A34A; }
+.metric-eligible .metric-num { color: #15803D; }
+.metric-partial  { border-top: 3pt solid #D97706; }
+.metric-partial .metric-num  { color: #B45309; }
+.metric-rejected { border-top: 3pt solid #DC2626; }
+.metric-rejected .metric-num { color: #B91C1C; }
+
+.r1-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  table-layout: fixed;
+}
+.r1-table th, .r1-table td {
+  border: 0.5pt solid #6B7280;
+  padding: 4pt 6pt;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+.r1-table thead th {
+  background: #1F2937;
+  color: #FFFFFF;
+  font-weight: 700;
+  text-align: left;
+}
+.r1-table .col-ser       { width: 5%;  text-align: center; }
+.r1-table .col-tender    { width: 22%; }
+.r1-table .col-tender a  { color: #1D4ED8; text-decoration: none; }
+.r1-table .col-tender a:hover { text-decoration: underline; }
+.r1-table .col-keyword   { width: 11%; font-weight: 600; }
+.r1-table .col-authority { width: 14%; }
+.r1-table .col-value     { width: 11%; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.r1-table .col-status    { width: 10%; font-weight: 600; text-align: center; }
+.r1-table .col-insight   { width: 27%; }
+.r1-table .keyword-cell {
+  background: #F3F4F6;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.r1-table .verdict-eligible    { background: #DCFCE7; color: #166534; }
+.r1-table .verdict-partial     { background: #FEF3C7; color: #92400E; }
+.r1-table .verdict-ineligible  { background: #FEE2E2; color: #991B1B; }
+.r1-table .verdict-excluded    { background: #E5E7EB; color: #374151; }
+.r1-table .verdict-pending     { background: #DBEAFE; color: #1E3A8A; }
+
+.r1-note {
+  margin-top: 6mm;
+  font-size: 9pt;
+  font-style: italic;
+  color: #4B5563;
+}
+
+.r1-empty {
+  margin-top: 12mm;
+  text-align: center;
+  font-style: italic;
+  color: #6B7280;
+}
+
+/* ═══ Report 2 — Detailed Tender Eligibility ═══ */
+.r2 { padding: 4mm 6mm; }
+.r2-header { margin-bottom: 6mm; border-bottom: 1pt solid #1F2937; padding-bottom: 4mm; }
+.r2-title {
+  font-size: 24pt; font-weight: 800; margin: 0; color: #1F2937; text-align: center;
+}
+.r2-subtitle {
+  font-size: 14pt; font-weight: 700; margin: 2pt 0 0 0; color: #374151; text-align: center;
+}
+.r2-meta-line {
+  margin: 4mm 0 0 0; text-align: center; font-size: 10pt; color: #4B5563;
+}
+.r2-meta-line strong { color: #1F2937; }
+
+.r2-empty {
+  margin: 10mm 0; padding: 6mm; background: #F3F4F6;
+  border-left: 4pt solid #6B7280; font-style: italic;
+}
+
+.tender-section {
+  page-break-inside: avoid;
+  margin-bottom: 8mm;
+  padding: 4mm 0;
+}
+.tender-section.verdict-eligible   { border-left: 4pt solid #16A34A; padding-left: 4mm; }
+.tender-section.verdict-partial    { border-left: 4pt solid #D97706; padding-left: 4mm; }
+.tender-section.verdict-ineligible { border-left: 4pt solid #B91C1C; padding-left: 4mm; }
+.tender-section.verdict-excluded   { border-left: 4pt solid #6B7280; padding-left: 4mm; }
+
+.tender-heading {
+  font-size: 13pt;
+  margin: 0 0 4mm 0;
+  display: flex;
+  align-items: center;
+  gap: 6pt;
+}
+.tender-idx { color: #6B7280; font-weight: 700; font-size: 10pt; }
+.verdict-pill {
+  display: inline-block;
+  padding: 2pt 8pt;
+  border-radius: 10pt;
+  font-size: 8.5pt;
+  font-weight: 700;
+  letter-spacing: 0.3pt;
+}
+.verdict-pill.verdict-eligible   { background: #DCFCE7; color: #166534; }
+.verdict-pill.verdict-partial    { background: #FEF3C7; color: #92400E; }
+.verdict-pill.verdict-ineligible { background: #FEE2E2; color: #991B1B; }
+.verdict-pill.verdict-excluded   { background: #E5E7EB; color: #374151; }
+
+.tender-title {
+  font-weight: 700;
+  flex: 1;
+}
+
+.callout.urgent {
+  background: #FEF2F2;
+  border-left: 4pt solid #DC2626;
+  color: #991B1B;
+  padding: 6pt 10pt;
+  margin: 2mm 0 4mm 0;
+  font-size: 10pt;
+  font-weight: 600;
+}
+
+h4.sec {
+  margin: 6mm 0 2mm 0;
+  font-size: 11.5pt;
+  font-weight: 700;
+  color: #1F2937;
+  border-bottom: 0.75pt solid #D1D5DB;
+  padding-bottom: 2pt;
+}
+
+table.kv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+  margin-bottom: 4mm;
+}
+table.kv-table th, table.kv-table td {
+  border: 0.5pt solid #D1D5DB;
+  padding: 4pt 8pt;
+  vertical-align: top;
+  text-align: left;
+}
+table.kv-table th {
+  background: #F9FAFB;
+  width: 32%;
+  font-weight: 600;
+  color: #374151;
+}
+table.kv-table ul { margin: 0 0 0 16pt; padding: 0; }
+table.kv-table li { margin: 0 0 2pt 0; }
+
+table.dim-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  margin-bottom: 4mm;
+}
+table.dim-table th, table.dim-table td {
+  border: 0.5pt solid #D1D5DB;
+  padding: 3pt 6pt;
+}
+table.dim-table thead th {
+  background: #1F2937;
+  color: #FFFFFF;
+  font-weight: 700;
+  text-align: left;
+}
+.status-pass    { background: #DCFCE7; color: #166534; font-weight: 600; }
+.status-partial { background: #FEF3C7; color: #92400E; font-weight: 600; }
+.status-fail    { background: #FEE2E2; color: #991B1B; font-weight: 600; }
+
+.risk-high   { background: #FEE2E2; color: #991B1B; font-weight: 700; padding: 1pt 6pt; }
+.risk-medium { background: #FEF3C7; color: #92400E; font-weight: 700; padding: 1pt 6pt; }
+.risk-low    { background: #DCFCE7; color: #166534; font-weight: 700; padding: 1pt 6pt; }
+
+.tender-sep {
+  border: 0;
+  border-top: 0.5pt dashed #9CA3AF;
+  margin: 6mm 0;
+}
+
+/* Kailash-voice Report 2 additions */
+.section-heading {
+  font-size: 13pt;
+  color: #111827;
+  margin: 10mm 0 2mm 0;
+  border-bottom: 1.5pt solid #111827;
+  padding-bottom: 1mm;
+}
+.section-blurb {
+  font-size: 9.5pt;
+  color: #4B5563;
+  margin: 0 0 5mm 0;
+  font-style: italic;
+}
+.narrative {
+  margin: 0;
+  text-align: justify;
+  font-size: 10pt;
+  color: #1F2937;
+}
+.basis {
+  font-style: italic;
+  font-weight: 500;
+  color: #4B5563;
+  margin-left: 4pt;
+  font-size: 9.5pt;
+}
+/* Per-field source page citation, e.g. [p 7] */
+.ref {
+  font-size: 8pt;
+  color: #6B7280;
+  font-style: italic;
+  white-space: nowrap;
+}
+.basis-block {
+  display: block;
+  font-size: 9.5pt;
+  color: #4B5563;
+  margin-top: 1.5mm;
+  line-height: 1.4;
+}
+.basis-block em,
+.layperson em {
+  color: #1F2937;
+  font-weight: 600;
+  font-style: normal;
+}
+.layperson {
+  font-size: 9.5pt;
+  color: #4B5563;
+  margin: 1.5mm 0 0 0;
+  line-height: 1.4;
+}
+.tender-section.verdict-rejected,
+.tender-section.verdict-ineligible {
+  background: #FAFAFA;
+}
+.verdict-pill.verdict-rejected {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+.trigger-block {
+  margin: 0 0 3mm 0;
+  padding: 2mm 3mm;
+  background: #FFF7ED;
+  border-left: 3pt solid #C2410C;
+}
+.trigger-name {
+  font-size: 10pt;
+  font-weight: 700;
+  color: #9A3412;
+  margin: 0 0 1mm 0;
+}
+.trigger-evidence {
+  font-size: 9.5pt;
+  color: #1F2937;
+  margin: 0;
+  line-height: 1.45;
+}
+.appendix {
+  margin-top: 12mm;
+  border-top: 2pt double #111827;
+  padding-top: 6mm;
+}
+.appendix .sub-note {
+  font-size: 9pt;
+  color: #6B7280;
+  margin-top: 2mm;
+  font-style: italic;
+}
+
+/* ─── Deployment requirements doc ───────────────────────── */
+.deploy-doc { padding: 0; }
+.deploy-header {
+  border-bottom: 2pt solid #111827;
+  padding-bottom: 6mm;
+  margin-bottom: 8mm;
+}
+.deploy-title {
+  font-size: 22pt;
+  font-weight: 800;
+  margin: 0 0 2pt 0;
+  color: #111827;
+  letter-spacing: -0.3pt;
+}
+.deploy-subtitle {
+  font-size: 14pt;
+  font-weight: 700;
+  color: #DC2626;
+  margin: 0 0 4pt 0;
+  letter-spacing: 0.3pt;
+}
+.deploy-meta {
+  font-size: 9.5pt;
+  color: #6B7280;
+  margin: 0;
+}
+.deploy-section {
+  margin: 0 0 7mm 0;
+  page-break-inside: avoid;
+}
+.deploy-h3 {
+  font-size: 12pt;
+  font-weight: 700;
+  color: #1F2937;
+  margin: 0 0 3mm 0;
+  border-left: 3pt solid #DC2626;
+  padding-left: 3mm;
+}
+.deploy-doc p {
+  font-size: 10pt;
+  margin: 0 0 3mm 0;
+  line-height: 1.55;
+}
+.deploy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  margin: 2mm 0 3mm 0;
+}
+.deploy-table th {
+  background: #1F2937;
+  color: #F9FAFB;
+  font-weight: 600;
+  text-align: left;
+  padding: 2mm 3mm;
+  border: 0.5pt solid #111827;
+}
+.deploy-table td {
+  padding: 2mm 3mm;
+  border: 0.5pt solid #E5E7EB;
+  vertical-align: top;
+}
+.deploy-table tbody tr:nth-child(even) td { background: #F9FAFB; }
+.cost-table .cost-col {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  width: 32mm;
+}
+.cost-table .cost-total td {
+  border-top: 1.2pt solid #111827;
+  background: #FEF3C7;
+  font-size: 10pt;
+}
+.deploy-note {
+  font-size: 9pt;
+  color: #6B7280;
+  font-style: italic;
+  margin: 2mm 0 0 0;
+  line-height: 1.5;
+}
+.deploy-ol, .deploy-ul {
+  font-size: 10pt;
+  margin: 0 0 3mm 5mm;
+  padding: 0;
+  line-height: 1.55;
+}
+.deploy-ol li, .deploy-ul li { margin-bottom: 1mm; }
+.deploy-doc code {
+  font-family: "Menlo", "Monaco", monospace;
+  font-size: 9pt;
+  background: #F3F4F6;
+  padding: 0.5pt 2pt;
+  border-radius: 2pt;
+  color: #DC2626;
+}
+
+/* ─── Merged report wrapper (Kailash layout) ─────────────── */
+.combined-doc { padding: 0; }
+
+.combined-master-header {
+  text-align: center;
+  margin: 0 0 8mm 0;
+  border-bottom: 2pt solid #111827;
+  padding-bottom: 5mm;
+}
+.combined-master-title {
+  font-size: 22pt;
+  font-weight: 800;
+  letter-spacing: 0.4pt;
+  color: #111827;
+  margin: 0 0 2pt 0;
+}
+.combined-master-subtitle {
+  font-size: 12pt;
+  color: #DC2626;
+  font-weight: 700;
+  margin: 0 0 4pt 0;
+  letter-spacing: 0.3pt;
+}
+.combined-master-meta {
+  font-size: 9.5pt;
+  color: #4B5563;
+  margin: 0;
+}
+.combined-master-meta strong { color: #1F2937; font-weight: 700; }
+
+.combined-section-banner {
+  font-size: 14pt;
+  font-weight: 800;
+  letter-spacing: 0.4pt;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  background: #1F2937;
+  padding: 3mm 5mm;
+  margin: 4mm 0 3mm 0;
+  border-left: 6pt solid #DC2626;
+}
+.combined-section-blurb {
+  font-size: 10pt;
+  color: #4B5563;
+  margin: 0 0 5mm 0;
+  font-style: italic;
+}
+.combined-section-blurb strong { color: #1F2937; font-style: normal; }
+
+.page-break { page-break-before: always; }

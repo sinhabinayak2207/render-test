@@ -1,0 +1,5 @@
+# Optional, accuracy-first OCR for SCANNED PDFs. Heavy — install on Render/Docker.
+# If these are absent (or fail), the pipeline automatically falls back to
+# gpt-4o-mini vision OCR, so scanned PDFs are still read.
+paddleocr>=2.7
+paddlepaddle>=2.6

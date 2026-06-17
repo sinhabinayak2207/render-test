@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{ doc_title }}</title>
+</head>
+<body class="combined-doc r1 r2">
+  <span class="report-date-string">{{ generated_on }}</span>
+
+  <header class="combined-master-header">
+    <h1 class="combined-master-title">TENDER INTELLIGENCE REPORT</h1>
+    <p class="combined-master-subtitle">CSDirekt Tender Search &amp; Eligibility Analysis</p>
+    <p class="combined-master-meta">
+      <strong>Generated On:</strong> {{ generated_on }}
+      &nbsp;·&nbsp;
+      <strong>Source:</strong> Tenderkart API
+      &nbsp;·&nbsp;
+      <strong>Total Tenders Identified:</strong> {{ counts.total }}
+      {% if cycle_id %}&nbsp;·&nbsp; <strong>Cycle:</strong> {{ cycle_id }}{% endif %}
+    </p>
+  </header>
+
+  <h2 class="combined-section-banner">EXECUTIVE SUMMARY</h2>
+  <p class="combined-section-blurb">Tender Search Results — full audit trail of this cycle.</p>
+
+  <section class="r1-metrics">
+    <div class="metric-card metric-total">
+      <div class="metric-num">{{ counts.total }}</div>
+      <div class="metric-label">Total Tenders Filtered</div>
+    </div>
+    <div class="metric-card metric-eligible">
+      <div class="metric-num">{{ counts.eligible }}</div>
+      <div class="metric-label">Fully Eligible</div>
+    </div>
+    <div class="metric-card metric-partial">
+      <div class="metric-num">{{ counts.partial }}</div>
+      <div class="metric-label">Partially Eligible</div>
+    </div>
+    <div class="metric-card metric-rejected">
+      <div class="metric-num">{{ counts.rejected }}</div>
+      <div class="metric-label">Rejected</div>
+    </div>
+  </section>
+
+  {% if grouped %}
+  <table class="r1-table">
+    <thead>
+      <tr>
+        <th class="col-ser">Sl. No</th>
+        <th class="col-tender">Tender Reference / Title</th>
+        <th class="col-keyword">Matched Keyword</th>
+        <th class="col-authority">Issuing Authority</th>
+        <th class="col-value">Estimated Value</th>
+        <th class="col-status">Strategic Fit Status</th>
+        <th class="col-insight">Key Business Action / Insight</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set ns = namespace(ser=0) %}
+      {% for keyword, rows in grouped %}
+        {% for row in rows %}
+          {% set ns.ser = ns.ser + 1 %}
+          <tr>
+            <td class="col-ser">{{ ns.ser }}</td>
+            <td class="col-tender">{{ row.title }}</td>
+            {% if loop.first %}
+              <td class="col-keyword keyword-cell" rowspan="{{ rows|length }}">{{ keyword }}</td>
+            {% endif %}
+            <td class="col-authority">{{ row.authority }}</td>
+            <td class="col-value">{{ row.estimated_value }}</td>
+            <td class="col-status verdict-{{ row.verdict_class }}">{{ row.verdict }}</td>
+            <td class="col-insight">{{ row.key_business_insight }}</td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="r1-note">
+    Note: Tenders with the same matched keyword are grouped under one keyword row.
+  </p>
+  {% else %}
+    <p class="r1-empty">Tenderkart returned no tenders for any filter this cycle.</p>
+  {% endif %}
+
+  {% if profile %}{% include '_profile.html.j2' %}{% endif %}
+
+  <div class="page-break"></div>
+
+  <h2 class="combined-section-banner">DETAILED TENDER ELIGIBILITY REPORT</h2>
+  <p class="combined-section-blurb">
+    <strong>Report Generated On:</strong> {{ generated_on }}
+    &nbsp;·&nbsp;
+    <strong>Source:</strong> Tenderkart API
+    &nbsp;·&nbsp;
+    <strong>Tenders in Scope:</strong>
+    {{ section_a|length + section_b|length + section_c|length }}
+    {% if cost_footer %}&nbsp;·&nbsp; <span class="ref">{{ cost_footer }}</span>{% endif %}
+  </p>
+
+  {% if not section_a and not section_b and not section_c %}
+    <p class="r2-empty">
+      No tenders matched the CSDirekt eligibility filter this cycle. See the
+      Executive Summary above for the full audit trail.
+    </p>
+  {% endif %}
+
+  {% if section_a %}
+  <h2 class="section-heading">SECTION A · FULLY ELIGIBLE BENCHMARK TENDERS</h2>
+  <p class="section-blurb">
+    These tenders pass every CSDirekt rubric dimension — scope alignment,
+    financial gate, dates, and document availability. Recommend prioritising
+    these for the Bid &amp; Pricing committee.
+  </p>
+  {% for t in section_a %}
+    {% set t_index = loop.index %}
+    {% set t_is_last = loop.last %}
+    {% include '_tender_block.html.j2' %}
+  {% endfor %}
+  {% endif %}
+
+  {% if section_b %}
+  <h2 class="section-heading">SECTION B · PARTIALLY ELIGIBLE TENDERS</h2>
+  <p class="section-blurb">
+    Scope &amp; capability match holds, but at least one gap (typically a
+    missing BOQ, undisclosed value, or eligibility variance) demands a
+    pre-bid clarification before commitment.
+  </p>
+  {% for t in section_b %}
+    {% set t_index = loop.index %}
+    {% set t_is_last = loop.last %}
+    {% include '_tender_block.html.j2' %}
+  {% endfor %}
+  {% endif %}
+
+  {% if detail_note %}
+  <p class="section-blurb"><em>{{ detail_note }}</em></p>
+  {% endif %}
+
+  {% if section_c %}
+  <h2 class="section-heading">SECTION C · REJECTED TENDERS — DETAILED REASONING</h2>
+  <p class="section-blurb">
+    These tenders matched a keyword the scanner watches, but on closer read
+    do not fit CSDirekt's core service profile. Each entry below shows the
+    specific disqualification triggers and the layperson business logic
+    behind the rejection.
+  </p>
+  {% for t in section_c %}
+    {% set t_index = loop.index %}
+    {% set t_is_last = loop.last %}
+    {% include '_rejected_block.html.j2' %}
+  {% endfor %}
+  {% endif %}
+
+  {% if show_appendix %}
+    {% include '_appendix.html.j2' %}
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,197 @@
+<section class="tender-section verdict-{{ t.verdict_class }}">
+  <h3 class="tender-heading">
+    <span class="tender-idx">#{{ t_index }}</span>
+    <span class="verdict-pill verdict-{{ t.verdict_class }}">{{ t.verdict }}</span>
+    <span class="tender-title">{{ t.title }}</span>
+  </h3>
+
+  {% if t.deadline_state == 'expired' %}
+  <p class="callout" style="background:#eee;color:#555;border-color:#ccc">
+    ⏱ EXPIRED — submission closed {{ t.days_to_close }} day(s) ago ({{ t.closing_date }}). Archived for reference.
+  </p>
+  {% elif t.deadline_state == 'urgent' %}
+  <p class="callout urgent">
+    ⚠ URGENT — closes in {{ t.days_to_close }} day(s). Review immediately if proceeding to bid.
+  </p>
+  {% endif %}
+
+  {% if t.verdict_class == 'partial' and t.partial_reasons %}
+  <p class="callout" style="border-color:#b42318;color:#b42318;background:#fdecea">
+    <strong>⚠ Why partially eligible:</strong>
+    {% for r in t.partial_reasons %}{{ r }}{% if not loop.last %}; {% endif %}{% endfor %}
+  </p>
+  {% endif %}
+
+  <h4 class="sec">1. Basic Tender Information</h4>
+  <table class="kv-table">
+    <tr><th>Authority Issuing the Tender</th><td>{{ t.authority }}{% if t.issuing_authority_location and t.issuing_authority_location != '—' %} <span class="ref">(office: {{ t.issuing_authority_location }})</span>{% endif %}</td></tr>
+    <tr><th>Issuing Authority Contact &amp; Designation</th><td>{{ t.authority_contact }}{% if t.page_refs.authority_contact %} <span class="ref">[{{ t.page_refs.authority_contact }}]</span>{% endif %}</td></tr>
+    <tr><th>Portal Source</th><td>{{ t.portal }}</td></tr>
+    <tr><th>Tender Reference Number</th><td>{{ t.reference_number }}</td></tr>
+    <tr><th>Estimated Value</th><td>{{ t.estimated_value }}{% if t.page_refs.estimated_value_cr %} <span class="ref">[{{ t.page_refs.estimated_value_cr }}]</span>{% endif %}</td></tr>
+    <tr><th>EMD (Earnest Money Deposit)</th><td>{{ t.emd }}{% if t.page_refs.emd_amount_cr %} <span class="ref">[{{ t.page_refs.emd_amount_cr }}]</span>{% endif %}{% for c in t.data_conflicts %}{% if c.field == 'emd_amount' %}<br><span class="ref">⚠ source conflict — {% for s in c.sources %}{{ s.source }}: ₹{{ '%.0f'|format(s.value) }}{% if not loop.last %}; {% endif %}{% endfor %}. Displaying the higher figure; confirm at pre-bid.</span>{% endif %}{% endfor %}</td></tr>
+    <tr><th>Published</th><td>{{ t.published }}</td></tr>
+    <tr><th>Submission Deadline</th><td>{{ t.submission_deadline }}</td></tr>
+    {% if t.technical_opening and t.technical_opening != '—' %}<tr><th>Technical Opening</th><td>{{ t.technical_opening }}</td></tr>{% endif %}
+    <tr><th>Tender Type (selection method)</th>
+      <td>
+        {{ t.tender_type }}{% if t.tender_type_confidence %} <span class="ref">(confidence: {{ t.tender_type_confidence }})</span>{% endif %}{% if t.page_refs.tender_type %} <span class="ref">[{{ t.page_refs.tender_type }}]</span>{% endif %}
+        {% if t.tender_type_reasoning %}<span class="basis-block"><em>Basis:</em> {{ t.tender_type_reasoning }}</span>{% endif %}
+      </td>
+    </tr>
+    <tr><th>Procurement Model</th><td>{{ t.procurement_model }}{% if t.page_refs.procurement_model %} <span class="ref">[{{ t.page_refs.procurement_model }}]</span>{% endif %}</td></tr>
+    <tr><th>Commercial Structure (who pays whom)</th>
+      <td>
+        {{ t.commercial_model }}{% if t.page_refs.commercial_model %} <span class="ref">[{{ t.page_refs.commercial_model }}]</span>{% endif %}
+        {% if t.commercial_model_reasoning %}<span class="basis-block"><em>Basis:</em> {{ t.commercial_model_reasoning }}</span>{% endif %}
+      </td>
+    </tr>
+  </table>
+
+  <h4 class="sec">2. Bid Decision Summary</h4>
+  <table class="kv-table">
+    <tr><th>Strategic Fit Score</th>
+      <td>
+        {{ t.fit_score_10 }} / 10
+        {% if t.strategic_fit_basis %}
+          <span class="basis">({{ t.strategic_fit_basis }})</span>
+        {% endif %}
+      </td>
+    </tr>
+    <tr><th>Reason for Recommendation</th>
+      <td>
+        {% if t.recommendation_narrative %}
+          <p class="narrative">{{ t.recommendation_narrative }}</p>
+        {% elif t.reasons %}
+          <ul>{% for r in t.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+  </table>
+
+  <h4 class="sec">3. Scope of Work</h4>
+  <table class="kv-table">
+    <tr><th>Detailed Scope Summary</th><td>{{ t.scope_summary }}{% if t.page_refs.scope_summary %} <span class="ref">[{{ t.page_refs.scope_summary }}]</span>{% endif %}</td></tr>
+    <tr><th>Key Deliverables</th>
+      <td>
+        {% if t.deliverables %}
+          <ul>{% for d in t.deliverables %}<li>{{ d }}</li>{% endfor %}</ul>
+          {% if t.page_refs.key_deliverables %}<span class="ref">[{{ t.page_refs.key_deliverables }}]</span>{% endif %}
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+    <tr><th>Project Duration / Timeline</th><td>{{ t.project_duration }}{% if t.page_refs.project_duration %} <span class="ref">[{{ t.page_refs.project_duration }}]</span>{% endif %}</td></tr>
+    <tr><th>Location of Execution</th><td>{{ t.location_of_execution }}{% if t.page_refs.location_of_execution %} <span class="ref">[{{ t.page_refs.location_of_execution }}]</span>{% endif %}</td></tr>
+    <tr><th>SoW Page References</th><td>{{ t.sow_page_refs }}</td></tr>
+  </table>
+
+  <h4 class="sec">4. Risk Assessment</h4>
+  <table class="kv-table">
+    <tr><th>Unusual / Risky Clauses</th>
+      <td>
+        {% if t.unusual_clauses %}
+          <ul>{% for c in t.unusual_clauses %}<li>{{ c }}</li>{% endfor %}</ul>
+          {% if t.page_refs.unusual_clauses %}<span class="ref">[{{ t.page_refs.unusual_clauses }}]</span>{% endif %}
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+    <tr><th>Penalty Clauses</th>
+      <td>
+        {% if t.penalty_clauses %}
+          <ul>{% for c in t.penalty_clauses %}<li>{{ c }}</li>{% endfor %}</ul>
+          {% if t.page_refs.penalty_clauses %}<span class="ref">[{{ t.page_refs.penalty_clauses }}]</span>{% endif %}
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+    <tr><th>Compliance Complexity</th>
+      <td>
+        {{ t.compliance_complexity }}
+        {% if t.compliance_basis %}
+          <span class="basis-block"><em>Basis:</em> {{ t.compliance_basis }}</span>
+        {% endif %}
+      </td>
+    </tr>
+    <tr><th>Overall Risk Level</th>
+      <td class="risk-{{ t.risk_class }}">
+        {{ t.risk_level }}
+        {% if t.risk_layperson_explanation %}
+          <p class="layperson">
+            <em>Layperson Explanation:</em> {{ t.risk_layperson_explanation }}
+          </p>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  <h4 class="sec">5. Eligibility Check (CSDirekt Rubric)</h4>
+  {% if t.eligibility_rows %}
+  <table class="dim-table">
+    <thead>
+      <tr><th>Dimension</th><th>Status</th><th>Detail</th></tr>
+    </thead>
+    <tbody>
+      {% for row in t.eligibility_rows %}
+      <tr>
+        <td>{{ row.dimension }}</td>
+        <td class="status-{{ row.status_class }}">{{ row.status }}</td>
+        <td>{{ row.detail }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p>No eligibility breakdown available.</p>
+  {% endif %}
+
+  {% if t.eligibility_flags %}
+  <h5 class="sub">Financial Margin Highlights</h5>
+  {% for fl in t.eligibility_flags %}
+  <p class="callout" style="border-color:{% if fl.borderline %}#9a6700{% else %}#b42318{% endif %};color:{% if fl.borderline %}#9a6700{% else %}#b42318{% endif %}">
+    ⚠ {{ fl.field }}: required Rs.{{ fl.required }} Cr vs capacity Rs.{{ fl.capacity }} Cr — {% if fl.borderline %}within partial margin &rarr; PARTIAL (highlighted){% else %}{{ fl.over_pct }}% over capacity &rarr; PARTIAL{% endif %}
+  </p>
+  {% endfor %}
+  {% endif %}
+
+  {% if t.eligibility_conditions %}
+  <h5 class="sub">Additional RFP Raw Requirements (verbatim from tender){% if t.page_refs.eligibility_conditions %} <span class="ref">[{{ t.page_refs.eligibility_conditions }}]</span>{% endif %}</h5>
+  <ul>
+    {% for c in t.eligibility_conditions %}<li>{{ c }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <h4 class="sec">6. Gaps to Address</h4>
+  {% if t.gaps %}
+    <ul>{% for g in t.gaps %}<li>{{ g }}</li>{% endfor %}</ul>
+  {% else %}
+    <p>None identified.</p>
+  {% endif %}
+
+  <h4 class="sec">7. Execution Readiness — Pre-bid Queries</h4>
+  {% if t.pre_bid_queries %}
+    <ul>{% for q in t.pre_bid_queries %}<li>{{ q }}</li>{% endfor %}</ul>
+  {% else %}
+    <p>None.</p>
+  {% endif %}
+
+  <h4 class="sec">8. L1 Tender Analysis (If Applicable)</h4>
+  <table class="kv-table">
+    <tr><th>Pricing Feasibility</th><td>{{ t.pricing_feasibility }}</td></tr>
+    <tr><th>Minimum Bid Estimate (EPC — expected project cost)</th><td>{{ t.epc_estimate }}</td></tr>
+  </table>
+
+  {% if t.source_docs %}
+  <h4 class="sec">9. Source Documents</h4>
+  <ul>
+    {% for d in t.source_docs %}
+    <li>
+      <strong>{{ d.kind|upper }}:</strong>
+      <a href="{{ d.url }}">{{ d.label }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if t.input_coverage %}<p class="ref" style="margin-top:6px">{{ t.input_coverage }}</p>{% endif %}
+
+  {% if not t_is_last %}<hr class="tender-sep">{% endif %}
+</section>

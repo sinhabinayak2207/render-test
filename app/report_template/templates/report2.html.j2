@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{ doc_title }}</title>
+</head>
+<body class="r2">
+  <span class="report-date-string">{{ generated_on }}</span>
+
+  <header class="r2-header">
+    <h1 class="r2-title">Report 2</h1>
+    <h2 class="r2-subtitle">Detailed Tender Eligibility Report</h2>
+    <p class="r2-meta-line">
+      <strong>Generated On:</strong> {{ generated_on }}
+      &nbsp;·&nbsp;
+      <strong>Source:</strong> Tenderkart API
+      &nbsp;·&nbsp;
+      <strong>Tenders in scope:</strong>
+      {{ section_a|length + section_b|length + section_c|length }}
+    </p>
+  </header>
+
+  {% if not section_a and not section_b and not section_c %}
+    <p class="r2-empty">
+      No tenders matched the CSDirekt eligibility filter this cycle. See the
+      companion Tender Search Executive Summary for the full audit trail.
+    </p>
+  {% endif %}
+
+  {% if section_a %}
+  <h2 class="section-heading">SECTION A · FULLY ELIGIBLE BENCHMARK TENDERS</h2>
+  <p class="section-blurb">
+    These tenders pass every CSDirekt rubric dimension — scope alignment,
+    financial gate, dates, and document availability. Recommend prioritising
+    these for the Bid &amp; Pricing committee.
+  </p>
+  {% for t in section_a %}
+    {% set t_index = loop.index %}
+    {% set t_is_last = loop.last %}
+    {% include '_tender_block.html.j2' %}
+  {% endfor %}
+  {% endif %}
+
+  {% if section_b %}
+  <h2 class="section-heading">SECTION B · PARTIALLY ELIGIBLE TENDERS</h2>
+  <p class="section-blurb">
+    Scope &amp; capability match holds, but at least one gap (typically a
+    missing BOQ, undisclosed value, or eligibility variance) demands a
+    pre-bid clarification before commitment.
+  </p>
+  {% for t in section_b %}
+    {% set t_index = loop.index %}
+    {% set t_is_last = loop.last %}
+    {% include '_tender_block.html.j2' %}
+  {% endfor %}
+  {% endif %}
+
+  {% if section_c %}
+  <h2 class="section-heading">SECTION C · REJECTED TENDERS — DETAILED REASONING</h2>
+  <p class="section-blurb">
+    These tenders matched a keyword the scanner watches, but on closer read
+    do not fit CSDirekt's core service profile. Each entry below shows the
+    specific disqualification triggers and the layperson business logic
+    behind the rejection.
+  </p>
+  {% for t in section_c %}
+    {% set t_index = loop.index %}
+    {% set t_is_last = loop.last %}
+    {% include '_rejected_block.html.j2' %}
+  {% endfor %}
+  {% endif %}
+
+  {% if show_appendix %}
+    {% include '_appendix.html.j2' %}
+  {% endif %}
+</body>
+</html>

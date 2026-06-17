@@ -1,0 +1,19 @@
+# Core API (enough to run auth + runs locally; OCR deps are separate)
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+pydantic-settings>=2.3
+supabase>=2.7
+httpx>=0.27
+requests>=2.31
+tenacity>=8.2            # backoff for the 429-heavy TenderKart API
+python-dateutil>=2.9
+python-dotenv>=1.0
+rapidfuzz>=3.9          # fuzzy keyword/scope matching in the RULES qualifier
+anthropic>=0.40         # Claude — scope-keyword generation (once) + narrative
+openai>=1.40            # gpt-4o-mini — field-level extraction fallback
+python-dateutil>=2.9
+
+weasyprint>=62         # primary PDF renderer (needs GTK libs; works on Linux/Render)
+reportlab>=4.0         # pure-Python PDF fallback (Windows, where WeasyPrint can't load GTK)
+jinja2>=3.1

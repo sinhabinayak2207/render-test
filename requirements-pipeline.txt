@@ -1,0 +1,15 @@
+# Document extraction (pure-Python, NO system binaries) — needed by the ingest worker.
+# Installs cleanly on Windows. PDF pages are rasterized via PyMuPDF (no poppler).
+PyMuPDF>=1.24           # digital PDF text + page rasterization
+pdfplumber>=0.11        # PDF tables / BOQ
+beautifulsoup4>=4.12
+lxml>=5.0
+markdownify>=0.13       # HTML -> markdown
+xlrd>=2.0               # legacy .xls
+openpyxl>=3.1           # .xlsx
+python-docx>=1.1        # .docx  (.doc handled via system LibreOffice when present)
+Pillow>=10.0
+numpy>=1.26
+
+weasyprint>=62
+jinja2>=3.1

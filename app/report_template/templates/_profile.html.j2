@@ -1,0 +1,58 @@
+<h2 class="combined-section-banner">COMPANY ELIGIBILITY &amp; TENDER-PREFERENCE PROFILE</h2>
+<p class="combined-section-blurb">The matching profile every tender is scored against (HARD FILTER = instant exclude · GATE = eligibility after RFP · PREFERENCE = ranking only).</p>
+
+<h4 class="sec">1 · Company Identity</h4>
+<table class="kv-table">
+  <tr><th>Company name</th><td>{{ profile.company_name }}</td></tr>
+  <tr><th>Primary contact</th><td>{{ profile.contact_email }}</td></tr>
+</table>
+
+<h4 class="sec">2 · Hard Filters (instant exclude, before AI)</h4>
+<table class="kv-table">
+  <tr><th>Min / Max tender value (Cr)</th><td>{{ profile.min_tender_value_cr }} / {{ profile.max_tender_value_cr }}</td></tr>
+  <tr><th>Sectors we DO (match &ge;1)</th><td>{{ profile.positive_keywords }}</td></tr>
+  <tr><th>Work we NEVER do</th><td>{{ profile.negative_keywords }}</td></tr>
+  <tr><th>Min days before deadline</th><td>{{ profile.min_days_to_close }}</td></tr>
+</table>
+
+<h4 class="sec">3 · Financial Eligibility (gate)</h4>
+<table class="kv-table">
+  <tr><th>Turnover — last year (Cr)</th><td>{{ profile.turnover_last }}</td></tr>
+  <tr><th>Turnover — 3-yr avg (Cr) <span class="ref">(capacity gate)</span></th><td>{{ profile.turnover_3yr }}</td></tr>
+  <tr><th>Net worth — latest (Cr) <span class="ref">(capacity gate)</span></th><td>{{ profile.net_worth_latest }}</td></tr>
+  <tr><th>Net worth — 3-yr avg (Cr)</th><td>{{ profile.net_worth_3yr }}</td></tr>
+  <tr><th>Bank solvency certificate (Cr)</th><td>{{ profile.solvency }}</td></tr>
+  <tr><th>EMD threshold (Cr)</th><td>{{ profile.max_emd }}</td></tr>
+  <tr><th>Max PBG %</th><td>{{ profile.max_pbg }}</td></tr>
+  <tr><th>Partial-eligible margin (±%)</th><td>{{ profile.partial_margin_pct }} <span class="ref">(required over capacity within this → PARTIAL, highlighted; eligible only if no margin needed)</span></td></tr>
+</table>
+
+<h4 class="sec">4 · Experience / Track Record (gate)</h4>
+<table class="kv-table">
+  <tr><th>Largest similar project (Cr)</th><td>{{ profile.largest_similar }}</td></tr>
+  <tr><th>No. of similar projects</th><td>{{ profile.similar_count }}</td></tr>
+  <tr><th>Sectors of past work</th><td>{{ profile.past_sectors }}</td></tr>
+</table>
+
+<h4 class="sec">5 · Legal</h4>
+{% if profile.legal_items %}
+<ul>{% for item in profile.legal_items %}<li>{{ item }}</li>{% endfor %}</ul>
+{% else %}<p class="ref">None added.</p>{% endif %}
+
+<h4 class="sec">6 · Tender Preferences (ranking only)</h4>
+<table class="kv-table">
+  <tr><th>Preferred sectors, ranked</th><td>{{ profile.pref_sectors }}</td></tr>
+  <tr><th>Value sweet-spot (Cr)</th><td>{{ profile.value_sweet_spot }}</td></tr>
+  <tr><th>Preferred client types</th><td>{{ profile.pref_clients }}</td></tr>
+  <tr><th>Preferred geographies</th><td>{{ profile.pref_geo }}</td></tr>
+  <tr><th>Deadline comfort (days)</th><td>{{ profile.pref_days }}</td></tr>
+  <tr><th>Risk appetite</th><td>{{ profile.risk_appetite }}</td></tr>
+  <tr><th>Always prioritize</th><td>{{ profile.always_prioritize }}</td></tr>
+  <tr><th>Always avoid</th><td>{{ profile.always_avoid }}</td></tr>
+</table>
+
+<h4 class="sec">7 · Others</h4>
+<table class="kv-table">
+  <tr><th>Auto-reject risk factors</th><td>{{ profile.auto_reject_risks }}</td></tr>
+  <tr><th>Analysis instructions (fed to Claude)</th><td>{{ profile.analysis_instructions }}</td></tr>
+</table>

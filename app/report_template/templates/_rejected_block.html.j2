@@ -1,0 +1,53 @@
+<section class="tender-section verdict-rejected">
+  <h3 class="tender-heading">
+    <span class="tender-idx">#{{ t_index }}</span>
+    <span class="verdict-pill verdict-rejected">{{ t.verdict }}</span>
+    <span class="tender-title">{{ t.title }}</span>
+  </h3>
+
+  <h4 class="sec">1. Basic Tender Information</h4>
+  <table class="kv-table">
+    <tr><th>Authority Issuing the Tender</th><td>{{ t.authority }}</td></tr>
+    <tr><th>Portal Source</th><td>{{ t.portal }}</td></tr>
+    <tr><th>Tender Reference Number</th><td>{{ t.reference_number }}</td></tr>
+    <tr><th>Estimated Value</th><td>{{ t.estimated_value }}</td></tr>
+    <tr><th>Submission Date</th><td>{{ t.closing_date }}</td></tr>
+  </table>
+
+  <h4 class="sec">2. Keyword Match Activation</h4>
+  <p class="narrative">
+    The automated crawler flagged this tender because it contained a direct
+    match with:
+    <strong>
+      {% if t.matched_keyword %}{{ t.matched_keyword }}{% else %}an internal scope keyword{% endif %}
+    </strong>.
+  </p>
+
+  <h4 class="sec">3. Disqualification Triggers</h4>
+  {% if t.disqualification_triggers %}
+    {% for tg in t.disqualification_triggers %}
+    <div class="trigger-block">
+      <h5 class="trigger-name">{{ tg.name }}</h5>
+      <p class="trigger-evidence">{{ tg.evidence }}</p>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p>No specific triggers recorded — see fallback reasons below.</p>
+    {% if t.reasons %}
+      <ul>{% for r in t.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+    {% endif %}
+  {% endif %}
+
+  <h4 class="sec">4. Business Logic Explanation</h4>
+  {% if t.business_logic_explanation %}
+    <p class="narrative">{{ t.business_logic_explanation }}</p>
+  {% else %}
+    <p>
+      The scanner matched a watched keyword but on closer inspection the core
+      scope falls outside CSDirekt's service profile (museum AV / immersive
+      cultural media / heritage projection / exhibition design).
+    </p>
+  {% endif %}
+
+  {% if not t_is_last %}<hr class="tender-sep">{% endif %}
+</section>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{ doc_title }}</title>
+</head>
+<body class="r1">
+  <span class="report-date-string">{{ generated_on }}</span>
+
+  <header class="r1-header">
+    <h1 class="r1-title">Report 1</h1>
+    <h2 class="r1-subtitle">Tender Search Executive Summary</h2>
+    <p class="r1-meta-line">
+      <strong>Generated:</strong> {{ generated_on }} &middot;
+      <strong>Source:</strong> Tenderkart API
+      {% if cycle_id %}&middot; <strong>Cycle:</strong> {{ cycle_id }}{% endif %}
+    </p>
+  </header>
+
+  <section class="r1-metrics">
+    <div class="metric-card metric-total">
+      <div class="metric-num">{{ counts.total }}</div>
+      <div class="metric-label">Total Tenders Filtered</div>
+    </div>
+    <div class="metric-card metric-eligible">
+      <div class="metric-num">{{ counts.eligible }}</div>
+      <div class="metric-label">Fully Eligible</div>
+    </div>
+    <div class="metric-card metric-partial">
+      <div class="metric-num">{{ counts.partial }}</div>
+      <div class="metric-label">Partially Eligible</div>
+    </div>
+    <div class="metric-card metric-rejected">
+      <div class="metric-num">{{ counts.rejected }}</div>
+      <div class="metric-label">Rejected</div>
+    </div>
+  </section>
+
+  {% if grouped %}
+  <table class="r1-table">
+    <thead>
+      <tr>
+        <th class="col-ser">Sl. No</th>
+        <th class="col-tender">Tender Reference / Title</th>
+        <th class="col-keyword">Matched Keyword</th>
+        <th class="col-authority">Issuing Authority</th>
+        <th class="col-value">Estimated Value</th>
+        <th class="col-status">Strategic Fit Status</th>
+        <th class="col-insight">Key Business Action / Insight</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set ns = namespace(ser=0) %}
+      {% for keyword, rows in grouped %}
+        {% for row in rows %}
+          {% set ns.ser = ns.ser + 1 %}
+          <tr>
+            <td class="col-ser">{{ ns.ser }}</td>
+            <td class="col-tender">
+              {% if row.url %}<a href="{{ row.url }}">{{ row.title }}</a>
+              {% else %}{{ row.title }}{% endif %}
+            </td>
+            {% if loop.first %}
+              <td class="col-keyword keyword-cell" rowspan="{{ rows|length }}">{{ keyword }}</td>
+            {% endif %}
+            <td class="col-authority">{{ row.authority }}</td>
+            <td class="col-value">{{ row.estimated_value }}</td>
+            <td class="col-status verdict-{{ row.verdict_class }}">{{ row.verdict }}</td>
+            <td class="col-insight">{{ row.key_business_insight }}</td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="r1-note">
+    Note: Tenders with the same matched keyword are grouped under one keyword row.
+    Title links open the source tender on Tenderkart.
+  </p>
+  {% else %}
+    <p class="r1-empty">Tenderkart returned no tenders for any filter this cycle.</p>
+  {% endif %}
+</body>
+</html>

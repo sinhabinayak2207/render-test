@@ -1,0 +1,19 @@
+# secrets — NEVER commit
+.env
+.env.local
+
+# virtualenvs
+.venv/
+venv/
+env/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# generated reports / scratch
+*.pdf
+*.log
+.DS_Store
