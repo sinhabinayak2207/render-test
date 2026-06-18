@@ -44,6 +44,37 @@ def _bid_eval(t: dict) -> str:
     return "OTHER"
 
 
+# Shown instead of a bare "—" so the report never has an unexplained blank.
+_NA = "Not stated in the tender documents"
+
+
+def _pages(v) -> str:
+    """Format SoW page refs (a list of {page, document}, a JSON string, a number, or text) cleanly."""
+    if not v or v in _EMPTY:
+        return _NA
+    if isinstance(v, str):
+        s = v.strip()
+        if s.startswith("[") or s.startswith("{"):
+            try:
+                v = json.loads(s)
+            except Exception:  # noqa: BLE001
+                return s
+        else:
+            return s
+    if isinstance(v, dict):
+        v = [v]
+    if isinstance(v, list):
+        parts = []
+        for x in v:
+            if isinstance(x, dict):
+                p, d = x.get("page"), (x.get("document") or "")
+                parts.append((f"p.{p}" if p is not None else "") + (f" ({d})" if d else "") or (d or ""))
+            else:
+                parts.append(str(x))
+        return ", ".join([p for p in parts if p.strip()]) or _NA
+    return str(v)
+
+
 def _get(path: str):
     return json.load(urllib.request.urlopen(urllib.request.Request(f"{settings.supabase_url}/rest/v1/{path}", headers=_H), timeout=60))
 
@@ -127,7 +158,7 @@ def _tctx(t):
     ex = (ed.get("extras") or {}) if isinstance(ed, dict) else {}
     v = t.get("verdict")
     dur = t.get("project_duration")
-    dur = f"{dur} days" if str(dur).strip().isdigit() else (dur or "—")
+    dur = f"{dur} days" if str(dur).strip().isdigit() else (dur or _NA)
     risk = (t.get("risk_level") or "Low")
     return {
         "verdict": v, "verdict_class": VCLASS.get(v, "rejected"),
@@ -137,29 +168,29 @@ def _tctx(t):
         "authority_contact": t.get("authority_contact"), "portal": t.get("portal_name") or "TenderKart",
         "reference_number": t.get("reference_number"), "estimated_value": _money(t.get("estimated_value")),
         "emd": _emd(t.get("emd_amount")), "published": (t.get("published_at") or "")[:10] or None,
-        "pre_bid_date": (_clean(t.get("pre_bid_date")) or "—"), "bid_eval": _bid_eval(t),
+        "pre_bid_date": (_clean(t.get("pre_bid_date")) or _NA), "bid_eval": _bid_eval(t),
         "submission_deadline": t.get("closing_date"), "technical_opening": t.get("opening_date") or "—",
-        "tender_type": t.get("tender_type") or "—", "tender_type_confidence": ed.get("tender_type_confidence") or "",
+        "tender_type": t.get("tender_type") or _NA, "tender_type_confidence": ed.get("tender_type_confidence") or "",
         "tender_type_reasoning": ed.get("tender_type_basis") or "",
-        "procurement_model": t.get("procurement_model") or "—",
-        "commercial_model": t.get("commercial_model") or "—", "commercial_model_reasoning": ed.get("commercial_basis") or "",
+        "procurement_model": t.get("procurement_model") or _NA,
+        "commercial_model": t.get("commercial_model") or _NA, "commercial_model_reasoning": ed.get("commercial_basis") or "",
         "fit_score_10": f"{(t.get('competitiveness_score') or 0)/10:.1f}",
         "strategic_fit_basis": t.get("strategic_fit_basis") or "", "recommendation_narrative": t.get("narrative_fit") or "",
-        "scope_summary": t.get("scope_summary") or "—", "deliverables": _slist(t.get("key_deliverables")),
-        "project_duration": dur, "location_of_execution": t.get("location_of_execution") or "—",
-        "sow_page_refs": _clean(t.get("sow_page_refs")) or "—",
+        "scope_summary": t.get("scope_summary") or _NA, "deliverables": _slist(t.get("key_deliverables")),
+        "project_duration": dur, "location_of_execution": t.get("location_of_execution") or _NA,
+        "sow_page_refs": _pages(t.get("sow_page_refs")),
         "unusual_clauses": _slist(t.get("unusual_clauses"), _clause), "penalty_clauses": _slist(t.get("penalty_clauses"), _clause),
-        "compliance_complexity": ex.get("compliance_complexity") or "—", "compliance_basis": t.get("compliance_basis") or "",
+        "compliance_complexity": _clean(ex.get("compliance_complexity")) or _NA, "compliance_basis": t.get("compliance_basis") or "",
         "risk_level": risk, "risk_class": RISKCLASS.get(risk.lower(), "medium"),
         "risk_layperson_explanation": t.get("risk_layperson_explanation") or "",
         "eligibility_rows": _elig_rows(t), "eligibility_conditions": _slist(t.get("eligibility_conditions")),
         "gaps": _slist(t.get("gaps_to_address")), "pre_bid_queries": _prebid(t),
-        "pricing_feasibility": _clean(ex.get("pricing_feasibility")) or "—",
-        "epc_estimate": f"Rs. {ex.get('epc_estimate_cr')} Cr" if ex.get("epc_estimate_cr") else "—",
+        "pricing_feasibility": _clean(ex.get("pricing_feasibility")) or _NA,
+        "epc_estimate": f"Rs. {ex.get('epc_estimate_cr')} Cr" if ex.get("epc_estimate_cr") else _NA,
         "source_docs": _docs(t), "input_coverage": "", "page_refs": {}, "data_conflicts": [],
         "documents_required": _slist(t.get("documents_required")),
-        "bidding_capacity": (_clean(t.get("bidding_capacity")) or "—"),
-        "multiplier_factor": (_clean(t.get("multiplier_factor")) or "—"),
+        "bidding_capacity": (_clean(t.get("bidding_capacity")) or _NA),
+        "multiplier_factor": (_clean(t.get("multiplier_factor")) or _NA),
         "raw_requirements": [
             {"label": a.get("label", ""), "value": a.get("value", ""),
              "page": (a.get("page") or a.get("document") or "—")}

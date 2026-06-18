@@ -32,9 +32,10 @@ class Settings(BaseSettings):
     enable_ocr: bool = False   # master switch: OCR scanned pages (PaddleOCR / gpt-4o-mini vision).
     #                            Off by default — rely on selectable text (HTML/digital PDF).
     pdf_text_min_chars_per_page: int = 80   # below this => treat page as scanned
-    extract_text_limit: int = 60000         # chars of doc text sent to gpt-4o-mini (was 30k)
+    extract_text_limit: int = 200000        # chars of doc text sent to gpt-4o-mini (full RFP/BOQ; 128k-ctx headroom)
     ocr_min_confidence: float = 0.55        # below this => vision fallback
     max_tenders_per_run: int = 1000
+    tender_timeout_sec: int = 240           # per-tender hard cap (4 min) — skip & continue if exceeded
 
     # Storage
     storage_bucket: str = "tender-documents"

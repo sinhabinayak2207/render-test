@@ -31,6 +31,8 @@ _SYSTEM = (
     "- ONLY call search_tenders if the user EXPLICITLY says 'already found' / 'in the database' / 'stored' / "
     "'previously processed'. Never use it for a plain 'find ... tenders' request.\n"
     "- 'stop / cancel / kill the scan' → call stop_scan (halts the running background scan).\n"
+    "- 'report do' / 'show me the report' / 'report for the last tenders' → call generate_report "
+    "(posts the verdict breakdown + PDF download link to the chat).\n"
     "After run_fresh_scan returns, tell the user the scan started and the report will appear here when done. "
     "After search_tenders, list each as '<title> — <authority> — <value> — <verdict> (<score>/100)'. "
     "Never invent tenders; only use tool results."
@@ -55,6 +57,10 @@ _TOOLS = [
     {"type": "function", "function": {
         "name": "stop_scan",
         "description": "Stop / cancel the currently running scan — halts the background process.",
+        "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {
+        "name": "generate_report",
+        "description": "Build & post the PDF report (verdict breakdown + download link) for the most recent run's tenders. Use for 'report do' / 'show me the report' / 'report for the last tenders'.",
         "parameters": {"type": "object", "properties": {}}}},
 ]
 
@@ -107,6 +113,50 @@ def _run_fresh_scan(keyword: str | None = None, limit: int | None = None) -> dic
                        "The report (which are eligible / partial / rejected) will appear here when the scan finishes."}
 
 
+def _generate_report() -> dict:
+    """Build the PDF report for the most recent run that has tenders, upload it, and post it
+    (verdict breakdown + download link) to the chat. Works for stopped/completed runs alike."""
+    import os
+    import tempfile
+
+    from ..pipeline import store
+    from ..report_pdf import build_pdf
+
+    runs = (service_client().table("tender_runs").select("id")
+            .order("started_at", desc=True).limit(20).execute().data or [])
+    rid = None
+    for r in runs:
+        has = (service_client().table("tenders").select("id").eq("run_id", r["id"])
+               .neq("verdict", "EXCLUDED").limit(1).execute().data or [])
+        if has:
+            rid = r["id"]
+            break
+    if not rid:
+        return {"ok": False, "message": "No processed tenders found yet — run a scan first."}
+
+    out = os.path.join(tempfile.gettempdir(), f"tender_report_{rid[:8]}.pdf")
+    build_pdf(rid, out_path=out)
+    with open(out, "rb") as fh:
+        url = store.upload_report(rid, fh.read())
+    rows = (service_client().table("tenders").select("title,verdict,competitiveness_score")
+            .eq("run_id", rid).neq("verdict", "EXCLUDED").order("competitiveness_score", desc=True).execute().data or [])
+    b = {"ELIGIBLE": [], "PARTIAL": [], "INELIGIBLE": []}
+    for r in rows:
+        b.setdefault(r.get("verdict"), b["INELIGIBLE"]).append(r)
+    lines = [f"📋 Report — {len(rows)} tenders: {len(b['ELIGIBLE'])} eligible · "
+             f"{len(b['PARTIAL'])} partially eligible · {len(b['INELIGIBLE'])} rejected"]
+    for lab, k in (("ELIGIBLE", "ELIGIBLE"), ("PARTIAL", "PARTIAL"), ("REJECTED", "INELIGIBLE")):
+        for r in b.get(k, []):
+            lines.append(f"• [{lab}] {(r.get('title') or '')[:70]} ({r.get('competitiveness_score')}/100)")
+    meta = {"report": True, "is_chat_reply": True}
+    if url:
+        lines.append("\nDownload the full PDF report below.")
+        meta["combined_url"] = url
+        meta["combined_name"] = "Tender Intelligence Report"
+    store.emit(rid, "success", "\n".join(lines), meta=meta)
+    return {"ok": True, "message": f"Posted the report for {len(rows)} tenders above (with PDF download link)."}
+
+
 def _dispatch(name: str, args: dict) -> dict:
     try:
         if name == "search_tenders":
@@ -117,6 +167,8 @@ def _dispatch(name: str, args: dict) -> dict:
             active = ingest.request_stop()
             return {"stopped": active,
                     "message": "Stopping the scan — background process halting." if active else "No scan is running."}
+        if name == "generate_report":
+            return _generate_report()
     except Exception as exc:  # noqa: BLE001
         log.warning("tool %s failed: %s", name, exc)
         return {"error": str(exc)}

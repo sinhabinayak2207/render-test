@@ -58,7 +58,9 @@ def _openai_fields(text: str, needed: list[str]) -> dict:
             '  "documents_required": [string] (documents / certificates / profiles the BIDDER must submit — e.g. GST, PAN, ISO 9001, similar-work completion certificate, bank solvency, EMD DD, audited balance sheets),\n'
             '  "bidding_capacity": string|null (any bidding-capacity / available-capacity requirement the RFP states — include the formula or figure if given),\n'
             '  "multiplier_factor": string|null (any multiplier the RFP applies to past completed-work value when valuing experience, e.g. "2x for similar works"),\n'
-            '  "extras": {"compliance_complexity": string|null, "pricing_feasibility": string|null, "epc_estimate_cr": number|null},\n'
+            '  "extras": {"compliance_complexity": "Low"|"Medium"|"High" (ALWAYS pick one, based on the licences/registrations/certifications the RFP demands), "pricing_feasibility": string|null (price/L1 tenders only — can CS Direkt price competitively, and why), "epc_estimate_cr": number|null (L1 only — rough expected project cost in Rs crore)},\n'
+            '  "sow_page_refs": string (page/section references for the scope of work, e.g. "p.34, p.37"),\n'
+            '  "pre_bid_date": "YYYY-MM-DD"|null (the pre-bid meeting DATE if any pre-bid meeting/place is mentioned),\n'
             '  "key_dates": [{"label","value","document","page"}],\n'
             '  "all_fields": [{"label","value","document","page"}]\n'
             "Numbers (turnover/networth) in ₹ crore. Dates as YYYY-MM-DD.\n\n"

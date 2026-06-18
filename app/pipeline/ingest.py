@@ -153,9 +153,23 @@ def run_cycle(run_id: str, filter_ids: list[str] | None = None,
                     continue
                 if not reproc and store.tender_db_id(tk_uuid):
                     continue  # already ingested — idempotent skip
+                # Per-tender hard cap: run in a worker thread; if it exceeds the timeout,
+                # skip it and move on (the slow thread is abandoned, not awaited).
+                from concurrent.futures import ThreadPoolExecutor
+                from concurrent.futures import TimeoutError as _FTimeout
+                _ex = ThreadPoolExecutor(max_workers=1)
                 try:
-                    verdict = _ingest_tender(tk, tk_uuid, fname, run_id, prof)
+                    verdict = _ex.submit(_ingest_tender, tk, tk_uuid, fname, run_id, prof).result(
+                        timeout=settings.tender_timeout_sec)
+                    _ex.shutdown(wait=False)
+                except _FTimeout:
+                    _ex.shutdown(wait=False, cancel_futures=True)
+                    log.warning("tender %s timed out (> %ss) — skipping", tk_uuid, settings.tender_timeout_sec)
+                    store.emit(run_id, "warn",
+                               f"Skipped a tender ({tk_uuid[:8]}) — exceeded {settings.tender_timeout_sec // 60}-min cap.")
+                    continue
                 except Exception as exc:  # noqa: BLE001 — one tender must not abort the filter
+                    _ex.shutdown(wait=False)
                     log.warning("tender %s failed: %s", tk_uuid, exc)
                     store.emit(run_id, "warn", f"Skipped a tender ({tk_uuid[:8]}): {exc}")
                     continue

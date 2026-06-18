@@ -66,7 +66,7 @@
           <p class="narrative">{{ t.recommendation_narrative }}</p>
         {% elif t.reasons %}
           <ul>{% for r in t.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
-        {% else %}—{% endif %}
+        {% else %}Not stated in the tender documents{% endif %}
       </td>
     </tr>
   </table>
@@ -79,7 +79,7 @@
         {% if t.deliverables %}
           <ul>{% for d in t.deliverables %}<li>{{ d }}</li>{% endfor %}</ul>
           {% if t.page_refs.key_deliverables %}<span class="ref">[{{ t.page_refs.key_deliverables }}]</span>{% endif %}
-        {% else %}—{% endif %}
+        {% else %}Not stated in the tender documents{% endif %}
       </td>
     </tr>
     <tr><th>Project Duration / Timeline</th><td>{{ t.project_duration }}{% if t.page_refs.project_duration %} <span class="ref">[{{ t.page_refs.project_duration }}]</span>{% endif %}</td></tr>
@@ -184,7 +184,7 @@
   <h4 class="sec">9. Bid Requirements &amp; Capacity</h4>
   <table class="kv-table">
     <tr><th>Documents / Profiles Required to Bid</th>
-      <td>{% if t.documents_required %}<ul>{% for d in t.documents_required %}<li>{{ d }}</li>{% endfor %}</ul>{% else %}—{% endif %}</td></tr>
+      <td>{% if t.documents_required %}<ul>{% for d in t.documents_required %}<li>{{ d }}</li>{% endfor %}</ul>{% else %}Not stated in the tender documents{% endif %}</td></tr>
     <tr><th>Bidding Capacity Requirement</th><td>{{ t.bidding_capacity }}</td></tr>
     <tr><th>Experience Multiplier Factor (if any)</th><td>{{ t.multiplier_factor }}</td></tr>
   </table>
@@ -205,7 +205,7 @@
     {% for d in t.source_docs %}
     <li>
       <strong>{{ d.kind|upper }}:</strong>
-      <a href="{{ d.url }}">{{ d.label }}</a>
+      <a href="{{ d.url }}" target="_blank" rel="noopener noreferrer">{{ d.label }}</a>
     </li>
     {% endfor %}
   </ul>
