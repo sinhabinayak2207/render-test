@@ -47,6 +47,25 @@ def _bid_eval(t: dict) -> str:
 # Shown instead of a bare "—" so the report never has an unexplained blank.
 _NA = "Not stated in the tender documents"
 
+import re as _re
+
+
+def _clean_doc(s) -> str:
+    """Replace the scraped 'xxx.html' listing-page name in any page ref with 'Tender Listing'."""
+    return _re.sub(r"[\w-]+\.html?\b", "Tender Listing", str(s or ""))
+
+
+def _deep_clean(obj):
+    """Recursively replace 'xxx.html' (the scraped listing page) with 'Tender Listing' in every
+    string of the render context — old data has it baked into field text, not just page refs."""
+    if isinstance(obj, str):
+        return _clean_doc(obj)
+    if isinstance(obj, list):
+        return [_deep_clean(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _deep_clean(v) for k, v in obj.items()}
+    return obj
+
 
 def _insight_fallback(t: dict) -> str:
     """Never leave the exec-summary insight blank — derive from verdict + score + reason
@@ -211,7 +230,7 @@ def _tctx(t):
         "strategic_fit_basis": t.get("strategic_fit_basis") or "", "recommendation_narrative": t.get("narrative_fit") or "",
         "scope_summary": t.get("scope_summary") or _NA, "deliverables": _slist(t.get("key_deliverables")),
         "project_duration": dur, "location_of_execution": t.get("location_of_execution") or _NA,
-        "sow_page_refs": _pages(t.get("sow_page_refs")),
+        "sow_page_refs": _clean_doc(_pages(t.get("sow_page_refs"))),
         "unusual_clauses": _slist(t.get("unusual_clauses"), _clause), "penalty_clauses": _slist(t.get("penalty_clauses"), _clause),
         "compliance_complexity": _clean(ex.get("compliance_complexity")) or _NA, "compliance_basis": t.get("compliance_basis") or "",
         "risk_level": risk, "risk_class": RISKCLASS.get(risk.lower(), "medium"),
@@ -220,7 +239,8 @@ def _tctx(t):
         "gaps": _slist(t.get("gaps_to_address")), "pre_bid_queries": _prebid(t),
         "pricing_feasibility": _clean(ex.get("pricing_feasibility")) or _NA,
         "epc_estimate": f"Rs. {ex.get('epc_estimate_cr')} Cr" if ex.get("epc_estimate_cr") else _NA,
-        "source_docs": _docs(t), "input_coverage": "", "page_refs": (ed.get("page_refs") or {}), "data_conflicts": [],
+        "source_docs": _docs(t), "input_coverage": "", "data_conflicts": [],
+        "page_refs": {k: _clean_doc(v) for k, v in (ed.get("page_refs") or {}).items()},
         "documents_required": _slist(t.get("documents_required")),
         "bidding_capacity": (_clean(t.get("bidding_capacity")) or _NA),
         "multiplier_factor": (_clean(t.get("multiplier_factor")) or _NA),
@@ -339,7 +359,7 @@ def _build_context(run_id: str | None) -> dict:
 
 
 def build_pdf(run_id: str | None = None, out_path: str = "/mnt/c/Users/sinha/Downloads/CSD_tender_report.pdf") -> str:
-    ctx = _build_context(run_id)
+    ctx = _deep_clean(_build_context(run_id))
     try:
         from .report_template.renderer import render_to_pdf
         render_to_pdf(template="combined_report.html.j2", context=ctx, out_path=Path(out_path))
