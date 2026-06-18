@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     pdf_text_min_chars_per_page: int = 80   # below this => treat page as scanned
     extract_text_limit: int = 200000        # chars of doc text sent to gpt-4o-mini (full RFP/BOQ; 128k-ctx headroom)
     ocr_min_confidence: float = 0.55        # below this => vision fallback
-    max_tenders_per_run: int = 1000
+    max_tenders_per_run: int = 100
     tender_timeout_sec: int = 240           # per-tender hard cap (4 min) — skip & continue if exceeded
 
     # Storage
