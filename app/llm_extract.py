@@ -73,12 +73,15 @@ def _openai_fields(text: str, needed: list[str]) -> dict:
             "Numbers (turnover/networth) in ₹ crore. Dates as YYYY-MM-DD.\n\n"
             f"Document text:\n---\n{text[:settings.extract_text_limit]}\n---"
         )
-        resp = client.chat.completions.create(
-            model=settings.openai_model,
-            temperature=0,
+        model = settings.openai_extract_model
+        kwargs = dict(
+            model=model,
             response_format={"type": "json_object"},
             messages=[{"role": "system", "content": _SYSTEM}, {"role": "user", "content": user}],
         )
+        if not model.startswith("gpt-5"):   # gpt-5 family rejects a non-default temperature
+            kwargs["temperature"] = 0
+        resp = client.chat.completions.create(**kwargs)
         return json.loads(resp.choices[0].message.content or "{}")
     except Exception as exc:  # noqa: BLE001
         log.warning("openai extract failed: %s", exc)

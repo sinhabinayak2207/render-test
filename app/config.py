@@ -20,8 +20,9 @@ class Settings(BaseSettings):
 
     # OpenAI — gpt-4o-mini field-level extraction fallback (only fields regex missed)
     openai_api_key: str = ""
-    openai_model: str = "gpt-4o-mini"
-    openai_chat_model: str = "gpt-5-mini"   # chat agent (orchestration) model
+    openai_model: str = "gpt-4o-mini"            # vision OCR fallback (has vision)
+    openai_extract_model: str = "gpt-5-mini"     # field-level extraction (more capable → fewer misses)
+    openai_chat_model: str = "gpt-5-mini"        # chat agent (orchestration) model
     enable_vision_fallback: bool = True   # gpt-4o-mini vision OCR when text extraction is empty
 
     # Pipeline
