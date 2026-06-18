@@ -34,14 +34,27 @@ _BIDORDER = {"QC": 0, "LC": 1, "L1": 2, "OTHER": 3}
 
 
 def _bid_eval(t: dict) -> str:
-    hay = " ".join(str(t.get(k) or "") for k in ("tender_type", "scope_summary", "raw_text")).lower()
-    if any(w in hay for w in ("qcbs", "quality and cost", "quality-cum-cost", "quality cum cost", "combined quality")):
-        return "QC"
-    if any(w in hay for w in ("lcs", "least cost", "least-cost", "lowest evaluated cost")):
-        return "LC"
-    if any(w in hay for w in ("l1", "lowest price", "lowest bidder", "item rate", "lowest quoted", "price bid", "financial bid")):
-        return "L1"
-    return "OTHER"
+    # Cache on the row: this is read again by _tctx/_rctx and (previously) inside the
+    # sort key, where re-scanning every tender O(n log n) times was wasteful.
+    cached = t.get("_bev")
+    if cached:
+        return cached
+    # Classify from the EXPLICIT method fields only — never raw_text. Generic phrases like
+    # "financial bid" / "price bid" / "item rate" appear in almost every RFP's boilerplate and
+    # were mislabelling QCBS/LCS tenders as L1, corrupting the Tender-Type fallback and sort order.
+    # Padded so " l1" matches a bare "L1" tender_type at the boundary without also matching
+    # substrings like "url1"/"html" (which the old bare "l1" check wrongly hit).
+    hay = " " + " ".join(str(t.get(k) or "") for k in ("tender_type", "award_method", "scope_summary")).lower() + " "
+    if any(w in hay for w in ("qcbs", "quality and cost", "quality-cum-cost", "quality cum cost", "combined quality", "quality cum price")):
+        bev = "QC"
+    elif any(w in hay for w in ("lcs", "least cost", "least-cost", "lowest evaluated cost")):
+        bev = "LC"
+    elif any(w in hay for w in (" l1 ", " l1,", " l1.", " l-1", "lowest price", "lowest bidder", "lowest quoted price", "lowest financial", "lowest responsive")):
+        bev = "L1"
+    else:
+        bev = "OTHER"
+    t["_bev"] = bev
+    return bev
 
 
 # Shown instead of a bare "—" so the report never has an unexplained blank.
@@ -51,8 +64,12 @@ import re as _re
 
 
 def _clean_doc(s) -> str:
-    """Replace the scraped 'xxx.html' listing-page name in any page ref with 'Tender Listing'."""
-    return _re.sub(r"[\w-]+\.html?\b", "Tender Listing", str(s or ""))
+    """Rename the scraped listing-page filename (e.g. 'details.html') to 'Tender Listing'.
+
+    The negative lookbehind for '/' protects real document URLs (storage links,
+    'https://gov.in/notice.html') — only a BARE filename token is renamed, so we never
+    mangle legitimate links or prose elsewhere in the report context."""
+    return _re.sub(r"(?<![/\w])[\w-]+\.html?\b", "Tender Listing", str(s or ""))
 
 
 def _deep_clean(obj):
@@ -71,13 +88,20 @@ def _insight_fallback(t: dict) -> str:
     """Never leave the exec-summary insight blank — derive from verdict + score + reason
     when Claude's key_business_insight is missing."""
     v, s = t.get("verdict"), t.get("competitiveness_score")
-    rs = t.get("reasons_qualified") or t.get("reasons_rejected") or []
-    r = "; ".join(str(x) for x in rs[:2]) if isinstance(rs, list) else str(rs or "")
+    sc = f"{s}/100" if s is not None else "score N/A"
+
+    def _r(rs):
+        return "; ".join(str(x) for x in rs[:2]) if isinstance(rs, list) else str(rs or "")
+
     if v == "ELIGIBLE":
-        return f"PREMIUM FIT: {s}/100 — {r}" if r else f"Fully eligible ({s}/100)."
+        # An eligible tender must NOT show rejection reasons; use the qualifying reasons only.
+        r = _r(t.get("reasons_qualified") or [])
+        return f"PREMIUM FIT: {sc} — {r}" if r else f"Fully eligible ({sc})."
     if v == "PARTIAL":
-        return f"PARTIAL FIT: {s}/100 — {r}" if r else f"Partially eligible ({s}/100)."
-    return f"DROP: {s}/100 — {r}" if r else f"Not eligible ({s}/100)."
+        r = _r(t.get("reasons_qualified") or t.get("reasons_rejected") or [])
+        return f"PARTIAL FIT: {sc} — {r}" if r else f"Partially eligible ({sc})."
+    r = _r(t.get("reasons_rejected") or [])
+    return f"DROP: {sc} — {r}" if r else f"Not eligible ({sc})."
 
 
 def _pages(v) -> str:

@@ -42,7 +42,9 @@ def _openai_fields(text: str, needed: list[str]) -> dict:
     try:
         from openai import OpenAI
 
-        client = OpenAI(api_key=settings.openai_api_key)
+        # Hard timeout: an unbounded OpenAI call would keep the per-tender worker thread
+        # alive after the executor "timed out" (threads can't be killed) → thread leak.
+        client = OpenAI(api_key=settings.openai_api_key, timeout=90.0, max_retries=1)
         user = (
             f"Extract these fields: {needed}\n\n"
             "Return ONLY JSON. Shapes:\n"
@@ -64,7 +66,7 @@ def _openai_fields(text: str, needed: list[str]) -> dict:
             '  "documents_required": [string] (documents / certificates / profiles the BIDDER must submit — e.g. GST, PAN, ISO 9001, similar-work completion certificate, bank solvency, EMD DD, audited balance sheets),\n'
             '  "bidding_capacity": string|null (any bidding-capacity / available-capacity requirement the RFP states — include the formula or figure if given),\n'
             '  "multiplier_factor": string|null (any multiplier the RFP applies to past completed-work value when valuing experience, e.g. "2x for similar works"),\n'
-            '  "page_refs": {"estimated_value_cr":"p2 of RFP","emd_amount_cr":"p2 of RFP","tender_type":"...","scope_summary":"...","eligibility_conditions":"...","key_deliverables":"...","procurement_model":"...","commercial_model":"..."} (the page AND document where each IMPORTANT field is stated — format "p<N> of <DOC>" e.g. "p2 of RFP", "p5 of BOQ"; OMIT any you cannot locate — never guess),\n'
+            '  "page_refs": {"estimated_value_cr":"p2 of RFP","emd_amount_cr":"p2 of RFP","tender_type":"...","scope_summary":"...","eligibility_conditions":"...","key_deliverables":"...","procurement_model":"...","commercial_model":"...","authority_contact":"...","project_duration":"...","location_of_execution":"...","unusual_clauses":"...","penalty_clauses":"..."} (the page AND document where each IMPORTANT field is stated — format "p<N> of <DOC>" e.g. "p2 of RFP", "p5 of BOQ"; OMIT any you cannot locate — never guess),\n'
             '  "extras": {"compliance_complexity": "Low"|"Medium"|"High" (ALWAYS pick one, based on the licences/registrations/certifications the RFP demands), "pricing_feasibility": string|null, "epc_estimate_cr": number|null, "procurement_basis": string|null (2-4 lines: WHY this procurement model fits and how THIS tender relates to it — e.g. for EPC, how the scope is engineer-procure-construct), "payment_terms": string|null (HOW the authority releases payment to the bidder — milestone schedule with % AND Rs amounts where stated, e.g. "10% on mobilisation (Rs.X), 40% at 50% progress (Rs.Y), ...")},\n'
             '  "sow_page_refs": string (page/section references for the scope of work, e.g. "p.34, p.37"),\n'
             '  "pre_bid_date": "YYYY-MM-DD"|null (the pre-bid meeting DATE if any pre-bid meeting/place is mentioned),\n'
@@ -98,7 +100,7 @@ def vision_ocr(png_bytes: bytes) -> str:
         from openai import OpenAI
 
         b64 = base64.b64encode(png_bytes).decode()
-        client = OpenAI(api_key=settings.openai_api_key)
+        client = OpenAI(api_key=settings.openai_api_key, timeout=90.0, max_retries=1)
         resp = client.chat.completions.create(
             model=settings.openai_model,
             temperature=0,

@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     ocr_min_confidence: float = 0.55        # below this => vision fallback
     max_tenders_per_run: int = 100
     tender_timeout_sec: int = 240           # per-tender hard cap (4 min) — skip & continue if exceeded
+    max_extract_doc_mb: int = 30            # skip PARSING docs larger than this (CPU-bound PyMuPDF
+    #                                         can't be preempted by the watchdog on a shrunk-CPU host)
 
     # Storage
     storage_bucket: str = "tender-documents"

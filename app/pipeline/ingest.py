@@ -137,6 +137,15 @@ def run_cycle(run_id: str, filter_ids: list[str] | None = None,
     found = qualified = sites_done = 0
     stopped = False
 
+    def _tick(n: int) -> None:
+        if explicit:   # chat 'find N' → fraction X/N
+            lbl = f"Processing tenders {n}/{cap}"
+            m = {"pct": round(n / max(cap, 1) * 88), "label": lbl, "processed": n, "total": cap}
+        else:          # 'Run agent now' → running count (total unknown ~100-150)
+            lbl = f"Processed {n} tender{'s' if n != 1 else ''}"
+            m = {"pct": None, "label": lbl, "processed": n, "total": None}
+        store.emit(run_id, "info", lbl, meta={"progress": m})
+
     for f in filters:
         if _stop.is_set():
             stopped = True
@@ -160,7 +169,23 @@ def run_cycle(run_id: str, filter_ids: list[str] | None = None,
                     store.emit(run_id, "info", f"Skipped (below ₹{prof.min_tender_value_cr} Cr floor): {(t.get('title') or '')[:40]}")
                     continue
                 if not reproc and store.tender_db_id(tk_uuid):
-                    continue  # already ingested — idempotent skip
+                    # Already ingested. DON'T re-extract (that re-ran the LLM and flipped
+                    # verdicts run-to-run); instead re-tag it into THIS run so a chat 'find N'
+                    # or manual scan reports it — otherwise the end-of-cycle report (which
+                    # queries run_id) came back empty whenever the matches were already seen.
+                    _v = store.retag_run(tk_uuid, run_id)
+                    found += 1
+                    f_count += 1
+                    if _v in ("ELIGIBLE", "PARTIAL"):
+                        qualified += 1
+                    if _stop.is_set():
+                        stopped = True
+                        break
+                    _tick(found)
+                    if found >= cap:
+                        store.emit(run_id, "warn", "Reached the tender cap — stopping early.")
+                        break
+                    continue
                 # Per-tender hard cap: run in a worker thread; if it exceeds the timeout,
                 # skip it and move on (the slow thread is abandoned, not awaited).
                 from concurrent.futures import ThreadPoolExecutor
@@ -186,17 +211,11 @@ def run_cycle(run_id: str, filter_ids: list[str] | None = None,
                 if _stop.is_set():   # stopped mid-tender → don't emit a stray progress tick
                     stopped = True
                     break
-                if explicit:   # chat 'find N' → fraction X/N
-                    _label = f"Processing tenders {found}/{cap}"
-                    _meta = {"pct": round(found / max(cap, 1) * 88), "label": _label, "processed": found, "total": cap}
-                else:          # 'Run agent now' → running count (total unknown ~100-150)
-                    _label = f"Processed {found} tender{'s' if found != 1 else ''}"
-                    _meta = {"pct": None, "label": _label, "processed": found, "total": None}
-                store.emit(run_id, "info", _label, meta={"progress": _meta})
+                _tick(found)
                 if verdict in ("ELIGIBLE", "PARTIAL"):
                     qualified += 1
             sites_done += 1
-            store.emit(run_id, "success", f"{fname}: {f_count} new tenders processed.")
+            store.emit(run_id, "success", f"{fname}: {f_count} tender(s) processed.")
         except Exception as exc:  # noqa: BLE001 — one bad filter shouldn't kill the run
             log.exception("filter %s failed", fname)
             store.emit(run_id, "error", f"{fname} failed: {exc}")
@@ -238,7 +257,10 @@ def run_cycle(run_id: str, filter_ids: list[str] | None = None,
                 .neq("verdict", "EXCLUDED").order("competitiveness_score", desc=True).execute().data or [])
         buckets: dict[str, list] = {"ELIGIBLE": [], "PARTIAL": [], "INELIGIBLE": []}
         for r in rows:
-            buckets.setdefault(r.get("verdict"), buckets["INELIGIBLE"]).append(r)
+            # Only bucket KNOWN verdicts — setdefault used to fold None/'PENDING' into the
+            # INELIGIBLE list and report them as 'rejected' though they were never evaluated.
+            if r.get("verdict") in buckets:
+                buckets[r["verdict"]].append(r)
         lines = [f"📋 Report — {len(rows)} tenders: {len(buckets['ELIGIBLE'])} eligible · "
                  f"{len(buckets['PARTIAL'])} partially eligible · {len(buckets['INELIGIBLE'])} rejected"]
         for label, key in (("ELIGIBLE", "ELIGIBLE"), ("PARTIAL", "PARTIAL"), ("REJECTED", "INELIGIBLE")):
@@ -282,6 +304,13 @@ def _ingest_tender(tk: TenderKart, tk_uuid: str, filter_name: str, run_id: str, 
             log.warning("doc download %s failed: %s", name, exc)
             continue
         url = store.upload_document(tk_uuid, doc_id, name, content) if settings.upload_documents else None
+        if len(content) > settings.max_extract_doc_mb * 1024 * 1024:
+            # Parsing a huge PDF is CPU-bound and can't be interrupted by the per-tender
+            # watchdog on a shrunk-CPU host (the cause of "stuck after N tenders"). Keep the
+            # doc as a downloadable source link, but don't parse it.
+            store.emit(run_id, "info",
+                       f"Skipped parsing oversized doc ({len(content) // (1024 * 1024)} MB): {name[:40]}")
+            continue
         res = extract(name, content)  # selectable text only (no OCR here)
         extracted.append({"doc": doc, "name": name, "content": content, "res": res, "url": url})
         hashes.append(res.content_hash)
@@ -407,6 +436,15 @@ def _ingest_tender(tk: TenderKart, tk_uuid: str, filter_name: str, run_id: str, 
             row.update(generate_narrative(row, profile))
         except Exception as exc:  # noqa: BLE001
             log.warning("narrative failed: %s", exc)
+
+    # text[] columns: gpt-5-mini / Claude occasionally return a bare string where the schema
+    # asks for a list (e.g. a single document, or one gap). Wrap it so the Postgres array
+    # insert doesn't fail outright (the 23514 retry only sanitises risk_level) and the report
+    # doesn't iterate the string character-by-character.
+    for _k in ("key_deliverables", "eligibility_conditions", "documents_required", "gaps_to_address"):
+        _v = row.get(_k)
+        if isinstance(_v, str):
+            row[_k] = [_v.strip()] if _v.strip() else None
 
     tender_id = store.upsert_tender(row, tk_uuid)
     store.replace_artifacts(tender_id, artifacts)

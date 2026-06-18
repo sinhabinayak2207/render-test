@@ -149,7 +149,10 @@ def _generate_report() -> dict:
             .eq("run_id", rid).neq("verdict", "EXCLUDED").order("competitiveness_score", desc=True).execute().data or [])
     b = {"ELIGIBLE": [], "PARTIAL": [], "INELIGIBLE": []}
     for r in rows:
-        b.setdefault(r.get("verdict"), b["INELIGIBLE"]).append(r)
+        # Only bucket KNOWN verdicts — setdefault folded None/'PENDING' into INELIGIBLE,
+        # over-reporting the rejected count with tenders that were never evaluated.
+        if r.get("verdict") in b:
+            b[r["verdict"]].append(r)
     lines = [f"📋 Report — {len(rows)} tenders: {len(b['ELIGIBLE'])} eligible · "
              f"{len(b['PARTIAL'])} partially eligible · {len(b['INELIGIBLE'])} rejected"]
     for lab, k in (("ELIGIBLE", "ELIGIBLE"), ("PARTIAL", "PARTIAL"), ("REJECTED", "INELIGIBLE")):

@@ -115,7 +115,9 @@ def generate_narrative(row: dict, profile=None) -> dict:
         import anthropic
     except Exception:  # noqa: BLE001
         return {}
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    # Hard per-request timeout: a hung Claude call would otherwise keep the per-tender
+    # worker thread alive past the run (the executor timeout can't kill it), leaking threads.
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key, timeout=90.0, max_retries=1)
     # Retry once: a transient Claude failure used to silently drop the whole narrative
     # (e.g. key_business_insight came back blank on some tenders).
     for attempt in (1, 2):
@@ -130,7 +132,10 @@ def generate_narrative(row: dict, profile=None) -> dict:
             text = "".join(getattr(b, "text", "") for b in resp.content)
             text = text[text.find("{"): text.rfind("}") + 1]
             data = json.loads(text)
-            out = {k: v for k, v in data.items() if v not in (None, "", [], {})}
+            # Keep empty lists/dicts: gaps_to_address=[] is Claude's EXPLICIT "no gaps" signal,
+            # and dropping it left a stale rules/extraction gaps list on the row. Strip only
+            # genuinely-absent values (None / empty string).
+            out = {k: v for k, v in data.items() if v is not None and v != ""}
             if out:
                 return out
         except Exception as exc:  # noqa: BLE001

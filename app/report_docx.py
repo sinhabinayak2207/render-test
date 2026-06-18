@@ -217,13 +217,22 @@ def _deep_block(doc, t, idx):
         _sub(doc, "7. Pre-Bid Queries")
         for q in t.get("pre_bid_queries"):
             if isinstance(q, dict):
+                # New consultant shape (matches report_pdf._prebid / narrative.py):
+                # priority / clause_reference / existing_requirement / observation /
+                # question / strategic_objective / expected_benefit.
+                pri = q.get("priority") or ""
+                ref = q.get("clause_reference") or ""
+                head = " · ".join(x for x in (pri, ref) if x)
                 p = doc.add_paragraph()
-                p.add_run(f"Q{q.get('sr_no','')}: ").bold = True
+                p.add_run(f"[{head}] " if head else "").bold = True
                 p.add_run(q.get("question", ""))
-                if q.get("rationale"):
-                    rp = doc.add_paragraph()
-                    rr = rp.add_run(f"Rationale: {q['rationale']}")
-                    rr.italic = True
+                for lbl, key in (("Current requirement", "existing_requirement"),
+                                 ("Observation", "observation"),
+                                 ("Objective", "strategic_objective"),
+                                 ("Expected benefit", "expected_benefit")):
+                    if q.get(key):
+                        rp = doc.add_paragraph()
+                        rp.add_run(f"{lbl}: {q[key]}").italic = True
 
     if extras.get("pricing_feasibility") or extras.get("epc_estimate_cr"):
         _sub(doc, "8. L1 / Commercial Analysis")

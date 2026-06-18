@@ -122,6 +122,22 @@ def _write_tender(row: dict, existing: str | None) -> str:
     return service_client().table("tenders").insert(row).execute().data[0]["id"]
 
 
+def retag_run(tenderkart_id: str, run_id: str) -> str | None:
+    """Move an already-ingested tender into `run_id` WITHOUT re-extracting it (the verdict
+    stays locked, so it never flips). This lets a chat 'find N' or a manual scan include
+    already-seen tenders in its report instead of emitting an empty 0-tender set. Returns
+    the tender's stored verdict so the run metrics can count it."""
+    try:
+        res = (
+            service_client().table("tenders")
+            .update({"run_id": run_id}).eq("tenderkart_id", tenderkart_id).execute()
+        )
+        return res.data[0].get("verdict") if res.data else None
+    except Exception as exc:  # noqa: BLE001 — re-tag is best-effort, never abort the scan
+        log.warning("retag_run failed for %s: %s", tenderkart_id, exc)
+        return None
+
+
 def upsert_tender(row: dict, tenderkart_id: str) -> str:
     """Insert or update by tenderkart_id (no unique constraint needed). Returns row id.
 
