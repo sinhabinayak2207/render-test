@@ -160,6 +160,13 @@ def _tctx(t):
     dur = t.get("project_duration")
     dur = f"{dur} days" if str(dur).strip().isdigit() else (dur or _NA)
     risk = (t.get("risk_level") or "Low")
+    # Tender Type must stay consistent with the Bid Evaluation Type: if the raw
+    # tender_type field is blank, fall back to the QC/LC/L1 classification instead
+    # of showing "Not stated" next to a determined "Lowest-Price (L1)".
+    _bev = _bid_eval(t)
+    _tt_raw = _clean(t.get("tender_type"))
+    _tt = _tt_raw or {"QC": "Quality-cum-Cost (QCBS)", "LC": "Least-Cost (LCS)",
+                      "L1": "Lowest-Price (L1)"}.get(_bev) or _NA
     return {
         "verdict": v, "verdict_class": VCLASS.get(v, "rejected"),
         "deadline_state": "ok", "days_to_close": None, "closing_date": t.get("closing_date"),
@@ -168,10 +175,11 @@ def _tctx(t):
         "authority_contact": t.get("authority_contact"), "portal": t.get("portal_name") or "TenderKart",
         "reference_number": t.get("reference_number"), "estimated_value": _money(t.get("estimated_value")),
         "emd": _emd(t.get("emd_amount")), "published": (t.get("published_at") or "")[:10] or None,
-        "pre_bid_date": (_clean(t.get("pre_bid_date")) or _NA), "bid_eval": _bid_eval(t),
+        "pre_bid_date": (_clean(t.get("pre_bid_date")) or _NA), "bid_eval": _bev,
         "submission_deadline": t.get("closing_date"), "technical_opening": t.get("opening_date") or "—",
-        "tender_type": t.get("tender_type") or _NA, "tender_type_confidence": ed.get("tender_type_confidence") or "",
-        "tender_type_reasoning": ed.get("tender_type_basis") or "",
+        "tender_type": _tt,
+        "tender_type_confidence": (ed.get("tender_type_confidence") or "") if _tt_raw else "",
+        "tender_type_reasoning": (ed.get("tender_type_basis") or "") if _tt_raw else "",
         "procurement_model": t.get("procurement_model") or _NA,
         "procurement_basis": _clean(ex.get("procurement_basis")) or "",
         "payment_terms": (_clean(ex.get("payment_terms")) or _clean(t.get("commercial_model")) or _NA),
