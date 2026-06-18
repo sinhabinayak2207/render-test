@@ -13,7 +13,7 @@ import json
 import logging
 import re
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from ..config import settings
 from ..llm_extract import hybrid_extract
@@ -111,10 +111,18 @@ def _run_thread(run_id: str, filter_ids: list[str] | None,
 def run_cycle(run_id: str, filter_ids: list[str] | None = None,
               limit: int | None = None, reprocess: bool | None = None) -> None:
     cap = int(limit) if limit else settings.max_tenders_per_run
+    explicit = limit is not None   # chat 'find N' -> show X/N; manual full scan -> show running count
     reproc = settings.reprocess_existing if reprocess is None else bool(reprocess)
+    # Rolling window: fetch tenders updated in the last N days (stays current, no hardcoded date).
+    if settings.sync_window_days:
+        sync_after = (datetime.now(timezone.utc) - timedelta(days=settings.sync_window_days)).strftime("%Y-%m-%dT00:00:00Z")
+    else:
+        sync_after = settings.sync_updated_after
     _stop.clear()
     tk = TenderKart()
-    store.emit(run_id, "info", "Starting Tenderkart cycle…")
+    # Scan-start tick so the live tracker + Stop button appear the moment the button is clicked.
+    store.emit(run_id, "info", "Scanning TenderKart…",
+               meta={"progress": {"processed": 0, "total": (cap if explicit else None), "label": "Scanning TenderKart…", "pct": 0}})
     if settings.upload_documents:
         store.ensure_bucket()
     prof = load_profile()  # editable RULES config (financials, scope keywords)
@@ -124,7 +132,7 @@ def run_cycle(run_id: str, filter_ids: list[str] | None = None,
         wanted = set(filter_ids)
         filters = [f for f in filters if f["id"] in wanted]
     store.update_run(run_id, sites_total=len(filters))
-    store.emit(run_id, "info", f"{len(filters)} filter(s) to scan since {settings.sync_updated_after}.")
+    store.emit(run_id, "info", f"{len(filters)} filter(s) to scan since {sync_after[:10]}.")
 
     found = qualified = sites_done = 0
     stopped = False
@@ -138,7 +146,7 @@ def run_cycle(run_id: str, filter_ids: list[str] | None = None,
         store.emit(run_id, "info", f"Scanning filter: {fname}")
         f_count = 0
         try:
-            for t in tk.iter_filter_tenders(fid, settings.sync_updated_after):
+            for t in tk.iter_filter_tenders(fid, sync_after):
                 if _stop.is_set():
                     stopped = True
                     break
@@ -178,11 +186,13 @@ def run_cycle(run_id: str, filter_ids: list[str] | None = None,
                 if _stop.is_set():   # stopped mid-tender → don't emit a stray progress tick
                     stopped = True
                     break
-                _cap = cap
-                store.emit(run_id, "info", f"Processing tenders {found}/{_cap}",
-                           meta={"progress": {"pct": round(found / max(_cap, 1) * 88),
-                                              "label": f"Processing tenders ({found}/{_cap})",
-                                              "processed": found, "total": _cap}})
+                if explicit:   # chat 'find N' → fraction X/N
+                    _label = f"Processing tenders {found}/{cap}"
+                    _meta = {"pct": round(found / max(cap, 1) * 88), "label": _label, "processed": found, "total": cap}
+                else:          # 'Run agent now' → running count (total unknown ~100-150)
+                    _label = f"Processed {found} tender{'s' if found != 1 else ''}"
+                    _meta = {"pct": None, "label": _label, "processed": found, "total": None}
+                store.emit(run_id, "info", _label, meta={"progress": _meta})
                 if verdict in ("ELIGIBLE", "PARTIAL"):
                     qualified += 1
             sites_done += 1

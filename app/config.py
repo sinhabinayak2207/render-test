@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     # Pipeline
     sync_updated_after: str = "2026-06-09T00:00:00Z"
+    sync_window_days: int = 120   # rolling: fetch tenders updated in the last N days (0 = use the fixed date above)
     request_delay_seconds: float = 2.5
     max_retries: int = 4
     ocr_lang: str = "en"
