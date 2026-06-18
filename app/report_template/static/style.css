@@ -554,6 +554,13 @@ table.dim-table thead th {
 .risk-medium { background: #FEF3C7; color: #92400E; font-weight: 700; padding: 1pt 6pt; }
 .risk-low    { background: #DCFCE7; color: #166534; font-weight: 700; padding: 1pt 6pt; }
 
+/* Pre-bid query cards (consultant style) */
+.prebid-card { border: 1px solid #E2E8F0; border-radius: 6pt; padding: 6pt 8pt; margin: 6pt 0; }
+.prebid-head { margin: 0 0 4pt 0; }
+.prebid-pri  { font-weight: 700; font-size: 8pt; padding: 1pt 6pt; border-radius: 3pt; margin-right: 6pt; }
+.prebid-crit { background: #FEE2E2; color: #991B1B; }
+.prebid-imp  { background: #DBEAFE; color: #1E40AF; }
+
 .tender-sep {
   border: 0;
   border-top: 0.5pt dashed #9CA3AF;

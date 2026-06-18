@@ -142,16 +142,26 @@ def _elig_rows(t):
 
 
 def _prebid(t):
+    """Rich pre-bid query cards (consultant style), Critical first."""
     out = []
     for q in (t.get("pre_bid_queries") or []):
         if isinstance(q, dict):
-            txt = q.get("question") or ""
-            if q.get("rationale"):
-                txt += f"  (Rationale: {q['rationale']})"
-            if txt:
-                out.append(txt)
+            question = _clean(q.get("question")) or ""
+            if not question:
+                continue
+            out.append({
+                "priority": (q.get("priority") or "Important"),
+                "clause_reference": _clean(q.get("clause_reference") or q.get("page_ref") or q.get("clause_description")) or "—",
+                "existing_requirement": _clean(q.get("existing_requirement")) or "—",
+                "observation": _clean(q.get("observation")) or "",
+                "question": question,
+                "strategic_objective": _clean(q.get("strategic_objective") or q.get("rationale")) or "",
+                "expected_benefit": _clean(q.get("expected_benefit")) or "",
+            })
         elif _clean(q):
-            out.append(str(q))
+            out.append({"priority": "Important", "clause_reference": "—", "existing_requirement": "—",
+                        "observation": "", "question": str(q), "strategic_objective": "", "expected_benefit": ""})
+    out.sort(key=lambda x: 0 if str(x.get("priority", "")).lower().startswith("crit") else 1)
     return out
 
 
@@ -239,6 +249,7 @@ def _rctx(t):
         "reasons": _slist(t.get("reasons_rejected")),
         "gaps": _slist(t.get("gaps_to_address")),
         "requirements": _slist(t.get("eligibility_conditions")),
+        "pre_bid_queries": _prebid(t),
     }
 
 

@@ -30,9 +30,14 @@ _SYSTEM = (
     "terms. For penalty clauses, state the penalty's cap/end period. Rate compliance complexity Low/Medium/"
     "High WITH the reason. For experience, refer to CS Direkt's completion certificates for similar work. If "
     "the documents are too thin to support a real analysis, SAY SO explicitly instead of guessing. "
-    "pre_bid_queries are the questions CS Direkt (the BIDDER) would raise to the tender AUTHORITY about "
-    "vague/ambiguous clauses that affect CS Direkt's eligibility, pricing or risk — each must cite the "
-    "clause/page it concerns. Return ONLY JSON."
+    "For pre_bid_queries, act as an EXPERT TENDER CONSULTANT whose goal is to MAXIMISE CS Direkt's chance to "
+    "qualify and win: compare every tender requirement against CS Direkt's actual credentials/capabilities, "
+    "and find where an eligibility / turnover / experience / EMD / project-completion / OEM / technical-spec "
+    "/ payment / warranty / SLA / contractual clause could reasonably be clarified, relaxed, modified or made "
+    "more inclusive through a pre-bid query. Raise ONLY meaningful, professionally-defensible questions a real "
+    "bidder would ask. Prioritise (in order): eligibility, turnover/financial, technical, experience, EMD, "
+    "consortium/JV/subcontracting, payment, commercial/contractual. Rank each 'Critical' (must ask) or "
+    "'Important' (should ask). Return ONLY JSON."
 )
 
 
@@ -72,7 +77,7 @@ def generate_narrative(row: dict, profile=None) -> dict:
             '  "compliance_basis": string (<=40 words, name certs/licenses),\n'
             '  "risk_layperson_explanation": string (2-4 plain sentences),\n'
             '  "gaps_to_address": [string] (compare the TENDER\'s stated requirements against CS Direkt\'s ACTUAL financials, past projects and registrations; list each tender-spec requirement CS Direkt does NOT meet + how to close it — e.g. "RFP requires ISO 27001 (p5 of RFP); CS Direkt does not hold it — obtain before bidding" or "turnover bar Rs.27.66 Cr exceeds single-entity reach — bid via JV". For ELIGIBLE: minor pre-award items or [] if none),\n'
-            '  "pre_bid_queries": [{"sr_no": number, "page_ref": string, "clause_description": string, "question": string, "rationale": string}]\n'
+            '  "pre_bid_queries": [{"priority": "Critical"|"Important", "clause_reference": string (clause no./section/page), "existing_requirement": string (what the RFP currently demands), "observation": string (the gap/concern vs CS Direkt\'s credentials), "question": string (the exact question to put to the authority), "strategic_objective": string (what asking it achieves for CS Direkt), "expected_benefit": string (benefit if the authority accepts the clarification)}]\n'
             '}'
         )
     else:  # INELIGIBLE / EXCLUDED
@@ -80,7 +85,8 @@ def generate_narrative(row: dict, profile=None) -> dict:
             '{\n'
             '  "key_business_insight": string (<=30 words, prefix "CRITICAL DROP: "),\n'
             '  "disqualification_triggers": [{"name": string, "evidence": string}],\n'
-            '  "business_logic_explanation": string (3-4 plain sentences)\n'
+            '  "business_logic_explanation": string (3-4 plain sentences),\n'
+            '  "pre_bid_queries": [{"priority": "Critical"|"Important", "clause_reference": string, "existing_requirement": string, "observation": string, "question": string, "strategic_objective": string, "expected_benefit": string}] (queries that could realistically make this tender achievable for CS Direkt — e.g. relax/clarify a hard eligibility bar; [] if no defensible query exists)\n'
             '}'
         )
     user = "Tender:\n" + json.dumps(meta, ensure_ascii=False, default=str) + "\n\nReturn ONLY this JSON:\n" + keys

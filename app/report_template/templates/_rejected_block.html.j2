@@ -64,5 +64,24 @@
     <p class="narrative">This tender falls outside CS Direkt's core service profile — there is no realistic path to eligibility based on the capabilities in CS Direkt's documents.</p>
   {% endif %}
 
+  {% if t.pre_bid_queries %}
+  <h4 class="sec">6. Pre-bid Queries (to widen eligibility, if defensible)</h4>
+    {% for q in t.pre_bid_queries %}
+    <div class="prebid-card">
+      <p class="prebid-head">
+        <span class="prebid-pri prebid-{{ 'crit' if (q.priority|lower) == 'critical' else 'imp' }}">{{ q.priority }}</span>
+        <strong>Clause Reference:</strong> {{ q.clause_reference }}
+      </p>
+      <table class="kv-table">
+        <tr><th>Existing Requirement</th><td>{{ q.existing_requirement }}</td></tr>
+        {% if q.observation %}<tr><th>Observation / Concern</th><td>{{ q.observation }}</td></tr>{% endif %}
+        <tr><th>Recommended Pre-bid Question</th><td>{{ q.question }}</td></tr>
+        {% if q.strategic_objective %}<tr><th>Strategic Objective</th><td>{{ q.strategic_objective }}</td></tr>{% endif %}
+        {% if q.expected_benefit %}<tr><th>Expected Benefit if Accepted</th><td>{{ q.expected_benefit }}</td></tr>{% endif %}
+      </table>
+    </div>
+    {% endfor %}
+  {% endif %}
+
   {% if not t_is_last %}<hr class="tender-sep">{% endif %}
 </section>
