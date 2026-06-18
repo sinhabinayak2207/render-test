@@ -28,6 +28,11 @@ _SYSTEM = (
     "FETCH LIVE FROM THE TENDERKART API — ALWAYS call run_fresh_scan(keyword='museum', limit=5). This NEVER "
     "reads from the database; it pulls fresh from TenderKart and re-processes (duplicates are fine). The "
     "pipeline runs in the background and posts a report (eligible / partial / rejected) when it finishes.\n"
+    "- 'find N tenders across multiple keywords / all sectors / auto / pick for me' → call "
+    "run_fresh_scan(limit=N) with NO keyword (scans ALL of CS Direkt's sectors in one run). Do NOT ask the "
+    "user to list keywords and do NOT invent unrelated keywords (e.g. catering, security, logistics) — CS "
+    "Direkt's sectors are fixed (museums, light & sound, events, exhibitions, science centres, heritage, "
+    "tourism, content). Just start the scan. Prefer to ACT; only ask a clarifying question if truly ambiguous.\n"
     "- ONLY call search_tenders if the user EXPLICITLY says 'already found' / 'in the database' / 'stored' / "
     "'previously processed'. Never use it for a plain 'find ... tenders' request.\n"
     "- 'stop / cancel / kill the scan' → call stop_scan (halts the running background scan).\n"
@@ -208,7 +213,9 @@ def chat(body: dict, user=Depends(current_user)):
                 args = json.loads(tc.function.arguments or "{}")
                 result = _dispatch(tc.function.name, args)
                 msgs.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(result, default=str)})
-        return {"reply": "Sorry — I couldn't complete that. Try rephrasing."}
+        return {"reply": "Started what I could. Say 'show me the report' once a scan finishes, "
+                         "or rephrase your request."}
     except Exception as exc:  # noqa: BLE001
         log.exception("agent chat failed")
-        return JSONResponse({"error": f"agent failed: {exc}"}, status_code=500)
+        # Always return a reply (200) so the chat shows the real error, never a bare "Agent error: OK".
+        return {"reply": f"⚠️ I hit an error: {exc}. Try again, or rephrase the request."}
